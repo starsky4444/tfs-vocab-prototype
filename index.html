@@ -7,7 +7,7 @@
     <meta name="description" content="Apprendre le vocabulaire français avec des cartes audio et des mini-tests." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=12" />
+    <link rel="stylesheet" href="styles.css?v=13" />
     <title>Mot à mot · Français</title>
   </head>
   <body>
@@ -61,6 +61,7 @@
           </div>
 
           <div class="study-tools">
+            <button class="reveal-mode-button" id="revealModeButton" type="button" aria-pressed="false" title="Afficher les deux langues après le reveal"><span aria-hidden="true">◫</span> <span id="revealModeLabel">2 langues</span></button>
             <button class="play-button" id="playButton" type="button" aria-pressed="false" title="Jouer les cartes du mode actif"><span id="playButtonIcon" aria-hidden="true">▶</span> <span id="playButtonLabel">Play</span></button>
             <button class="direction-button" id="directionButton" aria-label="Inverser les langues" title="Inverser les langues">
               <span id="directionFrom">EN</span><b>⇄</b><span id="directionTo">FR</span>
@@ -72,7 +73,7 @@
         <article class="flashcard" id="flashcard">
           <div class="card-topline">
             <span id="promptLanguage" class="language-pill">EN</span>
-            <span class="card-meta"><span id="cardNumber" class="card-number">Carte nº 1</span><span id="cardNote" class="card-note"></span></span>
+            <span class="card-meta"><span id="cardNumber" class="card-number">Carte 1/70</span><span id="cardNote" class="card-note"></span></span>
           </div>
           <div class="card-content">
             <p id="promptText" class="term prompt"></p>
@@ -158,6 +159,6 @@
 
     <footer><span>Prototype pédagogique</span><span>Audio généré par ton appareil</span></footer>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=12"></script>
+    <script src="app.js?v=13"></script>
   </body>
 </html>

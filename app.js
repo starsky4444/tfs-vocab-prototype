@@ -115,6 +115,7 @@ let playTimer;
 let studyFilter = 'all';
 let quiz = null;
 let studyDirection = storage.get('mot-a-mot-direction', 'en-fr');
+let showBothLanguages = storage.get('mot-a-mot-show-both-languages', true) !== false;
 const savedAutoSound = storage.get('mot-a-mot-auto-sound', {});
 let autoSound = { fr: savedAutoSound.fr !== false, en: savedAutoSound.en !== false };
 let autoSpeakTimer;
@@ -254,6 +255,25 @@ function updatePlayButton() {
     : playSessionActive ? 'Reprendre la lecture' : `Jouer les cartes du mode ${$('#filterButtonLabel').textContent}`;
 }
 
+function updateRevealModeButton() {
+  const answerOnly = !showBothLanguages;
+  const button = $('#revealModeButton');
+  button.classList.toggle('active', answerOnly);
+  button.setAttribute('aria-pressed', String(answerOnly));
+  button.title = answerOnly
+    ? 'Afficher les deux langues après le reveal'
+    : 'Afficher seulement la traduction après le reveal';
+  $('#revealModeLabel').textContent = answerOnly ? 'Traduction seule' : '2 langues';
+  $('#flashcard').classList.toggle('answer-only', revealed && answerOnly);
+}
+
+function toggleRevealMode() {
+  showBothLanguages = !showBothLanguages;
+  storage.set('mot-a-mot-show-both-languages', showBothLanguages);
+  updateRevealModeButton();
+  toast(showBothLanguages ? 'Reveal : les deux langues.' : 'Reveal : traduction seule.');
+}
+
 function clearPlayTimer() {
   clearTimeout(playTimer);
   playTimer = undefined;
@@ -331,7 +351,7 @@ function renderCard() {
   $('#answerText').textContent = answer;
   $('#promptLanguage').textContent = promptCode;
   $('#answerLanguage').textContent = answerCode;
-  $('#cardNumber').textContent = `Carte nº ${cards.findIndex((item) => item.id === card.id) + 1}`;
+  $('#cardNumber').textContent = `Carte ${(cardIndex % deck.length) + 1}/${deck.length}`;
   $('#directionFrom').textContent = promptCode;
   $('#directionTo').textContent = answerCode;
   $('#directionTitle').textContent = englishFirst ? 'De l’anglais vers le français' : 'Du français vers l’anglais';
@@ -345,6 +365,7 @@ function renderCard() {
   $('#ratingActions').hidden = true;
   $('#flashcard').dataset.cardId = card.id;
   $('#flashcard').classList.toggle('known-card', known.has(card.id));
+  $('#flashcard').classList.remove('answer-only');
   maybeSpeak(prompt, englishFirst ? 'en-US' : 'fr-CA');
   schedulePlayStep();
 }
@@ -362,6 +383,7 @@ function revealCard() {
   $('#answerPanel').hidden = false;
   $('#revealButton').hidden = true;
   $('#ratingActions').hidden = false;
+  $('#flashcard').classList.toggle('answer-only', !showBothLanguages);
   const card = deck[cardIndex % deck.length];
   const englishFirst = studyDirection === 'en-fr';
   maybeSpeak(englishFirst ? card.fr : card.en, englishFirst ? 'fr-CA' : 'en-US');
@@ -575,6 +597,7 @@ $('#flashcard').addEventListener('click', (event) => {
 $$('[data-rating]').forEach((button) => button.addEventListener('click', () => rateCard(button.dataset.rating)));
 $('#shuffleButton').addEventListener('click', () => { deck = shuffle(deck); cardIndex = 0; renderCard(); toast('Cartes mélangées.'); });
 $('#playButton').addEventListener('click', togglePlay);
+$('#revealModeButton').addEventListener('click', toggleRevealMode);
 $('#directionButton').addEventListener('click', toggleStudyDirection);
 $('#previousCard').addEventListener('click', () => navigateCard(-1));
 $('#nextCard').addEventListener('click', () => navigateCard(1));
@@ -604,6 +627,7 @@ $('#restoreSample').addEventListener('click', restoreSample);
 updateKnownCount();
 updateAutoSoundControls();
 updatePlayButton();
+updateRevealModeButton();
 updateFilterButton();
 renderCard();
 $('#importCount').textContent = cards.length;

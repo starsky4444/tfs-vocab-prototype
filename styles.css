@@ -114,6 +114,13 @@ h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight
 .play-button #playButtonIcon { color: var(--coral); }
 .play-button.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
 .play-button.active #playButtonIcon { color: var(--yellow); }
+.reveal-mode-button {
+  height: 44px; display: inline-flex; align-items: center; gap: 7px; padding: 0 13px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer;
+  color: var(--ink); font-size: 12px; font-weight: 850;
+}
+.reveal-mode-button > span:first-child { color: var(--coral); font-size: 16px; }
+.reveal-mode-button.active { border-color: rgba(240,111,82,.4); background: var(--coral-soft); }
 .direction-button {
   height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 13px;
   border: 1px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer;
@@ -161,6 +168,8 @@ h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight
 .language-pill { display: inline-flex; padding: 7px 10px; color: var(--ink); background: var(--yellow); border-radius: 9px; font-size: 11px; font-weight: 900; letter-spacing: .08em; }
 .card-note { color: var(--ink-soft); font-size: 12px; }
 .card-content { min-height: 175px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.flashcard.answer-only .card-content { display: none; }
+.flashcard.answer-only .answer-panel { padding-top: clamp(70px, 12vw, 115px); }
 .term { margin: 20px 0; max-width: 700px; font-family: Georgia, serif; font-size: clamp(30px, 6vw, 50px); line-height: 1.16; }
 .term.answer { font-size: clamp(27px, 5vw, 42px); color: var(--coral); }
 .audio-button {
