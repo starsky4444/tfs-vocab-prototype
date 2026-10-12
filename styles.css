@@ -94,7 +94,21 @@ h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight
 .section-head { display: flex; justify-content: space-between; gap: 20px; align-items: end; margin-bottom: 18px; }
 .section-head h2 { font-family: inherit; font-size: 19px; font-weight: 750; letter-spacing: -.02em; }
 .step-label { margin: 0 0 5px; color: var(--ink-soft); font-size: 13px; }
+.study-controls-row {
+  display: flex; align-items: center; gap: 10px; margin: -2px 0 14px; padding: 2px 0;
+  overflow-x: auto; scrollbar-width: none;
+}
+.study-controls-row::-webkit-scrollbar { display: none; }
+.study-controls-row > * { flex: 0 0 auto; }
 .study-tools { display: flex; align-items: center; gap: 8px; }
+.play-button {
+  height: 44px; display: inline-flex; align-items: center; gap: 7px; padding: 0 13px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer;
+  color: var(--ink); font-size: 12px; font-weight: 850;
+}
+.play-button span { color: var(--coral); }
+.play-button.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.play-button.active span { color: var(--yellow); }
 .direction-button {
   height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 13px;
   border: 1px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer;
@@ -104,8 +118,8 @@ h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight
 .direction-button:active b { transform: rotate(180deg); }
 .icon-button { width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 50%; background: var(--paper); cursor: pointer; font-size: 22px; }
 .audio-preferences {
-  display: flex; align-items: center; justify-content: flex-end; gap: 8px;
-  margin: -5px 2px 13px; color: var(--ink-soft); font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+  margin: 0; color: var(--ink-soft); font-size: 12px; font-weight: 700;
 }
 .sound-toggle { position: relative; cursor: pointer; }
 .sound-toggle input { position: absolute; opacity: 0; pointer-events: none; }

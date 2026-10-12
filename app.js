@@ -109,6 +109,7 @@ let deck = [...cards];
 let cardIndex = 0;
 let revealed = false;
 let known = new Set(storage.get('mot-a-mot-known', []));
+let playUnknownOnly = false;
 let quiz = null;
 let studyDirection = storage.get('mot-a-mot-direction', 'en-fr');
 const savedAutoSound = storage.get('mot-a-mot-auto-sound', {});
@@ -202,6 +203,34 @@ function updateKnownCount() {
   storage.set('mot-a-mot-known', [...known]);
 }
 
+function updatePlayButton() {
+  const button = $('#playButton');
+  button.classList.toggle('active', playUnknownOnly);
+  button.setAttribute('aria-pressed', String(playUnknownOnly));
+  button.title = playUnknownOnly ? 'Quitter le mode Play' : 'Jouer seulement les cartes non maîtrisées';
+}
+
+function togglePlay() {
+  if (playUnknownOnly) {
+    playUnknownOnly = false;
+    deck = [...cards];
+    cardIndex = 0;
+    updatePlayButton();
+    renderCard();
+    toast('Toutes les cartes sont de nouveau affichées.');
+    return;
+  }
+
+  const unknownCards = cards.filter((card) => !known.has(card.id));
+  if (!unknownCards.length) return toast('Toutes les cartes sont déjà maîtrisées.');
+  playUnknownOnly = true;
+  deck = shuffle(unknownCards);
+  cardIndex = 0;
+  updatePlayButton();
+  renderCard();
+  toast(`Play : ${deck.length} carte(s) à travailler.`);
+}
+
 function renderCard() {
   if (!deck.length) return;
   const card = deck[cardIndex % deck.length];
@@ -254,6 +283,21 @@ function rateCard(rating) {
   const card = deck[cardIndex % deck.length];
   if (rating === 'known') known.add(card.id); else known.delete(card.id);
   updateKnownCount();
+  if (playUnknownOnly && rating === 'known') {
+    deck = deck.filter((item) => item.id !== card.id);
+    if (!deck.length) {
+      playUnknownOnly = false;
+      deck = [...cards];
+      cardIndex = 0;
+      updatePlayButton();
+      renderCard();
+      toast('Play terminé : toutes les cartes sont maîtrisées.');
+      return;
+    }
+    cardIndex %= deck.length;
+    renderCard();
+    return;
+  }
   cardIndex = (cardIndex + 1) % deck.length;
   renderCard();
 }
@@ -383,8 +427,10 @@ function applyImport() {
   deck = [...cards];
   cardIndex = 0;
   known = new Set();
+  playUnknownOnly = false;
   storage.set('mot-a-mot-cards', cards);
   updateKnownCount();
+  updatePlayButton();
   renderCard();
   toast(`${cards.length} cartes importées.`);
   switchView('study');
@@ -396,7 +442,9 @@ function restoreSample() {
   deck = [...cards];
   cardIndex = 0;
   known = new Set();
+  playUnknownOnly = false;
   updateKnownCount();
+  updatePlayButton();
   $('#importText').value = DEFAULT_TSV;
   updateImportCount();
   renderCard();
@@ -419,6 +467,7 @@ $('#flashcard').addEventListener('click', (event) => {
 });
 $$('[data-rating]').forEach((button) => button.addEventListener('click', () => rateCard(button.dataset.rating)));
 $('#shuffleButton').addEventListener('click', () => { deck = shuffle(deck); cardIndex = 0; renderCard(); toast('Cartes mélangées.'); });
+$('#playButton').addEventListener('click', togglePlay);
 $('#directionButton').addEventListener('click', toggleStudyDirection);
 $('#previousCard').addEventListener('click', () => navigateCard(-1));
 $('#nextCard').addEventListener('click', () => navigateCard(1));
@@ -447,6 +496,7 @@ $('#restoreSample').addEventListener('click', restoreSample);
 
 updateKnownCount();
 updateAutoSoundControls();
+updatePlayButton();
 renderCard();
 $('#importCount').textContent = cards.length;
 window.speechSynthesis?.getVoices();
