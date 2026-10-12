@@ -303,15 +303,14 @@ function updatePlayButton() {
 }
 
 function updateRevealModeButton() {
-  const answerOnly = !showBothLanguages;
   const button = $('#revealModeButton');
-  button.classList.toggle('active', answerOnly);
-  button.setAttribute('aria-pressed', String(answerOnly));
-  button.title = answerOnly
-    ? 'Afficher les deux langues après le reveal'
-    : 'Afficher seulement la traduction après le reveal';
-  $('#revealModeLabel').textContent = answerOnly ? 'Traduction seule' : '2 langues';
-  $('#flashcard').classList.toggle('answer-only', revealed && answerOnly);
+  button.classList.toggle('active', showBothLanguages);
+  button.setAttribute('aria-pressed', String(showBothLanguages));
+  button.title = showBothLanguages
+    ? 'Afficher seulement la traduction après le reveal'
+    : 'Afficher les deux langues après le reveal';
+  $('#revealModeLabel').textContent = '2 langues';
+  $('#flashcard').classList.toggle('answer-only', revealed && !showBothLanguages);
 }
 
 function updateShuffleButton() {
@@ -319,7 +318,6 @@ function updateShuffleButton() {
   button.classList.toggle('active', shuffleEnabled);
   button.setAttribute('aria-pressed', String(shuffleEnabled));
   button.title = shuffleEnabled ? 'Désactiver le mélange des cartes' : 'Activer le mélange des cartes';
-  $('#shuffleStatus').textContent = shuffleEnabled ? 'ON' : 'OFF';
 }
 
 function toggleShuffle() {

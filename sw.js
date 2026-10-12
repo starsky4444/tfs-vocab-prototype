@@ -1,5 +1,5 @@
-const CACHE = 'mot-a-mot-v16';
-const ASSETS = ['./', './index.html', './styles.css?v=15', './app.js?v=15', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'mot-a-mot-v17';
+const ASSETS = ['./', './index.html', './styles.css?v=16', './app.js?v=16', './manifest.webmanifest', './icon.svg'];
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));

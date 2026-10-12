@@ -120,16 +120,14 @@ h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight
   color: var(--ink); font-size: 12px; font-weight: 850;
 }
 .reveal-mode-button > span:first-child { color: var(--coral); font-size: 16px; }
-.reveal-mode-button.active { border-color: rgba(240,111,82,.4); background: var(--coral-soft); }
 .shuffle-button {
   height: 44px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px;
   border: 1px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer;
   color: var(--ink); font-size: 11px; font-weight: 850;
 }
 .shuffle-button > span { color: var(--coral); font-size: 18px; }
-.shuffle-button b { min-width: 29px; padding: 3px 5px; border-radius: 999px; background: rgba(20,54,44,.08); font-size: 9px; text-align: center; }
-.shuffle-button.active { border-color: rgba(47,125,98,.36); background: var(--mint-bright); }
-.shuffle-button.active b { color: var(--paper); background: var(--ink); }
+.reveal-mode-button.active, .shuffle-button.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.reveal-mode-button.active > span:first-child, .shuffle-button.active > span { color: var(--yellow); }
 .direction-button {
   height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 13px;
   border: 1px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer;
