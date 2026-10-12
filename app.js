@@ -245,6 +245,12 @@ function rateCard(rating) {
   renderCard();
 }
 
+function navigateCard(step) {
+  if (!deck.length) return;
+  cardIndex = (cardIndex + step + deck.length) % deck.length;
+  renderCard();
+}
+
 function switchView(name) {
   $$('.tab').forEach((tab) => tab.classList.toggle('active', tab.dataset.view === name));
   $$('.view').forEach((view) => view.classList.toggle('active', view.id === `${name}View`));
@@ -401,6 +407,8 @@ $('#flashcard').addEventListener('click', (event) => {
 $$('[data-rating]').forEach((button) => button.addEventListener('click', () => rateCard(button.dataset.rating)));
 $('#shuffleButton').addEventListener('click', () => { deck = shuffle(deck); cardIndex = 0; renderCard(); toast('Cartes mélangées.'); });
 $('#directionButton').addEventListener('click', toggleStudyDirection);
+$('#previousCard').addEventListener('click', () => navigateCard(-1));
+$('#nextCard').addEventListener('click', () => navigateCard(1));
 $('#autoSoundFrench').addEventListener('change', (event) => setAutoSound('fr', event.target.checked));
 $('#autoSoundEnglish').addEventListener('change', (event) => setAutoSound('en', event.target.checked));
 $('#speakPrompt').addEventListener('click', () => {
