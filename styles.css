@@ -98,6 +98,21 @@ h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight
 .direction-button b { color: var(--coral); font-size: 17px; line-height: 1; transition: transform .2s ease; }
 .direction-button:active b { transform: rotate(180deg); }
 .icon-button { width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 50%; background: var(--paper); cursor: pointer; font-size: 22px; }
+.audio-preferences {
+  display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+  margin: -5px 2px 13px; color: var(--ink-soft); font-size: 12px; font-weight: 700;
+}
+.sound-toggle { position: relative; cursor: pointer; }
+.sound-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.sound-toggle span {
+  display: inline-flex; align-items: center; gap: 5px; padding: 7px 10px;
+  border: 1px solid var(--line); border-radius: 999px; background: rgba(255, 253, 248, .72);
+  color: var(--ink-soft); font-size: 11px; font-weight: 900; letter-spacing: .06em;
+}
+.sound-toggle span::before { content: "🔇"; font-size: 12px; filter: grayscale(1); }
+.sound-toggle input:checked + span { border-color: rgba(20, 54, 44, .3); background: var(--mint-bright); color: var(--ink); }
+.sound-toggle input:checked + span::before { content: "🔊"; filter: none; }
+.sound-toggle input:focus-visible + span { outline: 3px solid rgba(185, 223, 207, .8); outline-offset: 2px; }
 
 .flashcard, .panel {
   background: var(--paper); border: 1px solid rgba(20,54,44,.1); border-radius: var(--radius); box-shadow: var(--shadow);
@@ -196,6 +211,7 @@ footer { max-width: 1080px; margin: 0 auto; padding: 24px 28px 36px; display: fl
   .section-head { align-items: center; }
   .section-head h2 { max-width: 220px; }
   .direction-button { padding: 0 10px; }
+  .audio-preferences { justify-content: flex-start; margin-left: 1px; }
   .flashcard { min-height: 440px; padding: 22px 18px; border-radius: 22px; }
   .choices { grid-template-columns: 1fr; }
   .choice { min-height: 60px; }

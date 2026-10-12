@@ -111,6 +111,9 @@ let revealed = false;
 let known = new Set(storage.get('mot-a-mot-known', []));
 let quiz = null;
 let studyDirection = storage.get('mot-a-mot-direction', 'en-fr');
+const savedAutoSound = storage.get('mot-a-mot-auto-sound', {});
+let autoSound = { fr: savedAutoSound.fr !== false, en: savedAutoSound.en !== false };
+let autoSpeakTimer;
 
 function cleanForSpeech(text) {
   return text
@@ -162,6 +165,27 @@ function speak(text, language, rate = 0.92) {
   speechSynthesis.speak(utterance);
 }
 
+function maybeSpeak(text, language, delay = 160) {
+  const key = language.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+  if (!autoSound[key]) return;
+  clearTimeout(autoSpeakTimer);
+  autoSpeakTimer = setTimeout(() => speak(text, language), delay);
+}
+
+function updateAutoSoundControls() {
+  $('#autoSoundFrench').checked = autoSound.fr;
+  $('#autoSoundEnglish').checked = autoSound.en;
+  storage.set('mot-a-mot-auto-sound', autoSound);
+}
+
+function setAutoSound(language, enabled) {
+  autoSound = { ...autoSound, [language]: enabled };
+  clearTimeout(autoSpeakTimer);
+  if (!enabled && 'speechSynthesis' in window) speechSynthesis.cancel();
+  updateAutoSoundControls();
+  toast(`Son automatique ${language.toUpperCase()} ${enabled ? 'activé' : 'désactivé'}.`);
+}
+
 function updateKnownCount() {
   $('#knownCount').textContent = known.size;
   storage.set('mot-a-mot-known', [...known]);
@@ -193,6 +217,7 @@ function renderCard() {
   $('#revealButton').hidden = false;
   $('#ratingActions').hidden = true;
   $('#flashcard').dataset.cardId = card.id;
+  maybeSpeak(prompt, englishFirst ? 'en-US' : 'fr-CA');
 }
 
 function toggleStudyDirection() {
@@ -207,6 +232,9 @@ function revealCard() {
   $('#answerPanel').hidden = false;
   $('#revealButton').hidden = true;
   $('#ratingActions').hidden = false;
+  const card = deck[cardIndex % deck.length];
+  const englishFirst = studyDirection === 'en-fr';
+  maybeSpeak(englishFirst ? card.fr : card.en, englishFirst ? 'fr-CA' : 'en-US');
 }
 
 function rateCard(rating) {
@@ -373,6 +401,8 @@ $('#flashcard').addEventListener('click', (event) => {
 $$('[data-rating]').forEach((button) => button.addEventListener('click', () => rateCard(button.dataset.rating)));
 $('#shuffleButton').addEventListener('click', () => { deck = shuffle(deck); cardIndex = 0; renderCard(); toast('Cartes mélangées.'); });
 $('#directionButton').addEventListener('click', toggleStudyDirection);
+$('#autoSoundFrench').addEventListener('change', (event) => setAutoSound('fr', event.target.checked));
+$('#autoSoundEnglish').addEventListener('change', (event) => setAutoSound('en', event.target.checked));
 $('#speakPrompt').addEventListener('click', () => {
   const card = deck[cardIndex % deck.length];
   speak(studyDirection === 'en-fr' ? card.en : card.fr, studyDirection === 'en-fr' ? 'en-US' : 'fr-CA');
@@ -395,6 +425,7 @@ $('#useImport').addEventListener('click', applyImport);
 $('#restoreSample').addEventListener('click', restoreSample);
 
 updateKnownCount();
+updateAutoSoundControls();
 renderCard();
 $('#importCount').textContent = cards.length;
 window.speechSynthesis?.getVoices();
