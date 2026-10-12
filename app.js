@@ -223,6 +223,21 @@ function updateKnownCount() {
   storage.set(knownCardsKey(), [...known]);
   updateFilterButton();
   renderCatalog();
+  window.dispatchEvent(new CustomEvent('mot-a-mot:progress', { detail: currentProgress() }));
+}
+
+function currentProgress() {
+  return { setId: activeSet.id, knownIds: [...known] };
+}
+
+function applySyncedProgress(progress) {
+  const validIds = new Set(cards.map((card) => card.id));
+  known = new Set((progress?.knownIds || []).filter((id) => validIds.has(id)));
+  storage.set(knownCardsKey(), [...known]);
+  deck = buildDeck();
+  cardIndex = Math.min(cardIndex, Math.max(0, deck.length - 1));
+  updateKnownCount();
+  renderCard();
 }
 
 function cardsForFilter(filter = studyFilter) {
@@ -345,6 +360,7 @@ function selectSet(setId) {
   updatePlayButton();
   renderCard();
   $('#importCount').textContent = cards.length;
+  window.dispatchEvent(new CustomEvent('mot-a-mot:set-change', { detail: { setId: activeSet.id } }));
   toast(`${activeSet.courseId} · ${activeSet.shortTitle} : ${cards.length} cartes.`);
 }
 
@@ -806,5 +822,11 @@ deck = buildDeck();
 renderCard();
 $('#importCount').textContent = cards.length;
 window.speechSynthesis?.getVoices();
+
+window.MotAMot = {
+  getProgress: currentProgress,
+  applyProgress: applySyncedProgress,
+  notify: toast,
+};
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});

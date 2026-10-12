@@ -59,6 +59,9 @@ button { color: inherit; }
 .brand strong, .brand small { display: block; }
 .brand strong { font-size: 16px; letter-spacing: -.02em; }
 .brand small { color: var(--ink-soft); margin-top: 2px; font-size: 11px; }
+.account-button { display: inline-flex; align-items: center; gap: 9px; padding: 6px 11px 6px 6px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer; font-size: 12px; font-weight: 800; }
+.account-button[hidden] { display: none; }
+.account-avatar { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--mint-bright); color: var(--ink); font-weight: 900; }
 .filter-button {
   min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px;
   border: 1px solid var(--line); border-radius: 999px; background: var(--paper);
@@ -286,9 +289,26 @@ footer { max-width: 1080px; margin: 0 auto; padding: 24px 28px 36px; display: fl
 .toast { position: fixed; left: 50%; bottom: 24px; z-index: 10; transform: translate(-50%, 20px); opacity: 0; padding: 12px 18px; border-radius: 999px; color: white; background: var(--ink); font-size: 13px; pointer-events: none; transition: .25s ease; }
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
 
+.auth-gate { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 22px; overflow-y: auto; background: rgba(246,240,228,.96); backdrop-filter: blur(16px); }
+.auth-gate[hidden] { display: none; }
+.auth-card { width: min(520px, 100%); padding: clamp(26px, 6vw, 46px); border: 1px solid var(--line); border-radius: 28px; background: var(--paper); box-shadow: var(--shadow); }
+.auth-brand { width: fit-content; margin-bottom: 34px; }
+.auth-card h2 { font-size: clamp(32px, 6vw, 48px); }
+.auth-copy { margin: 18px 0 28px; color: var(--ink-soft); line-height: 1.6; }
+.google-sign-in { width: 100%; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid var(--line); border-radius: 14px; background: white; cursor: pointer; font-weight: 800; }
+.google-sign-in span { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: white; background: #4285f4; font-weight: 900; }
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--ink-soft); font-size: 11px; text-transform: uppercase; }
+.auth-divider::before, .auth-divider::after { content: ''; height: 1px; flex: 1; background: var(--line); }
+.email-sign-in label { display: block; margin-bottom: 7px; font-size: 12px; font-weight: 850; }
+.email-sign-in > div { display: flex; gap: 8px; }
+.email-sign-in input { min-width: 0; flex: 1; padding: 12px 13px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.email-sign-in button { flex: 0 0 auto; padding: 12px 14px; border: 0; border-radius: 12px; background: var(--ink); color: white; cursor: pointer; font-weight: 800; }
+.auth-status { min-height: 20px; margin: 14px 0 0; color: var(--ink-soft); font-size: 12px; line-height: 1.4; }
+
 @media (max-width: 680px) {
   .topbar { padding: 18px; }
   .brand small { display: none; }
+  .account-button #accountName { display: none; }
   .filter-button { min-height: 40px; padding: 6px 9px; }
   .streak { font-size: 11px; }
   .shell { width: min(100% - 24px, 880px); margin-top: 20px; }
@@ -314,6 +334,8 @@ footer { max-width: 1080px; margin: 0 auto; padding: 24px 28px 36px; display: fl
   .choice { min-height: 60px; }
   .result-actions, .import-actions { grid-template-columns: 1fr; }
   footer { padding: 20px 18px 28px; flex-direction: column; }
+  .auth-card { padding: 26px 20px; }
+  .email-sign-in > div { flex-direction: column; }
 }
 
 @media (prefers-reduced-motion: reduce) {

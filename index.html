@@ -7,7 +7,7 @@
     <meta name="description" content="Apprendre le vocabulaire français avec des cartes audio et des mini-tests." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=17" />
+    <link rel="stylesheet" href="styles.css?v=18" />
     <title>Mot à mot · Français</title>
   </head>
   <body>
@@ -17,6 +17,10 @@
         <span class="brand-mark">M</span>
         <span><strong>Mot à mot</strong><small>par The French School</small></span>
       </a>
+      <button id="accountButton" class="account-button" type="button" hidden>
+        <span id="accountAvatar" class="account-avatar">?</span>
+        <span id="accountName">Mon compte</span>
+      </button>
     </header>
 
     <main class="shell">
@@ -190,7 +194,29 @@
 
     <footer><span>Prototype pédagogique</span><span>Audio généré par ton appareil</span></footer>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <section id="authGate" class="auth-gate" hidden aria-labelledby="authTitle">
+      <div class="auth-card">
+        <a class="brand auth-brand" href="#" aria-label="Mot à mot">
+          <span class="brand-mark">M</span>
+          <span><strong>Mot à mot</strong><small>par The French School</small></span>
+        </a>
+        <p class="eyebrow">Espace étudiant</p>
+        <h2 id="authTitle">Retrouve tes cartes<br />sur tous tes appareils.</h2>
+        <p class="auth-copy">Connecte-toi pour accéder aux cours A1, A2 et B1 et garder ta progression.</p>
+        <button id="googleSignIn" class="google-sign-in" type="button"><span>G</span> Continuer avec Google</button>
+        <div class="auth-divider"><span>ou</span></div>
+        <form id="emailSignInForm" class="email-sign-in">
+          <label for="emailSignIn">Adresse courriel</label>
+          <div>
+            <input id="emailSignIn" name="email" type="email" autocomplete="email" placeholder="nom@exemple.com" required />
+            <button type="submit">Recevoir le lien</button>
+          </div>
+        </form>
+        <p id="authStatus" class="auth-status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
     <script src="catalog.js?v=1"></script>
-    <script src="app.js?v=17"></script>
+    <script src="app.js?v=18"></script>
+    <script type="module" src="firebase-client.js?v=2"></script>
   </body>
 </html>
