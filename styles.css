@@ -65,7 +65,10 @@ button { color: inherit; }
   padding: 9px 13px; border: 1px solid var(--line); border-radius: 999px;
   background: rgba(255,253,248,.6); font-size: 13px;
 }
-.streak span { color: var(--coral); }
+.streak-icon { color: var(--coral); }
+.goal-copy { display: grid; line-height: 1.05; }
+.goal-copy strong { white-space: nowrap; }
+.goal-copy small { margin-top: 4px; color: var(--ink-soft); font-size: 9px; font-weight: 650; }
 
 .shell { width: min(880px, calc(100% - 36px)); margin: 38px auto 72px; }
 .hero { display: grid; grid-template-columns: 1.35fr .65fr; align-items: end; gap: 40px; margin: 30px 0 50px; }
@@ -132,6 +135,8 @@ h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight
 }
 .card-topline, .card-content, .answer-panel, .reveal { position: relative; z-index: 1; }
 .card-topline { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.card-meta { display: flex; align-items: center; gap: 9px; color: var(--ink-soft); }
+.card-number { font-size: 11px; font-weight: 850; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
 .language-pill { display: inline-flex; padding: 7px 10px; color: var(--ink); background: var(--yellow); border-radius: 9px; font-size: 11px; font-weight: 900; letter-spacing: .08em; }
 .card-note { color: var(--ink-soft); font-size: 12px; }
 .card-content { min-height: 175px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }

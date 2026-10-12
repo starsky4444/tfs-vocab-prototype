@@ -114,6 +114,8 @@ let studyDirection = storage.get('mot-a-mot-direction', 'en-fr');
 const savedAutoSound = storage.get('mot-a-mot-auto-sound', {});
 let autoSound = { fr: savedAutoSound.fr !== false, en: savedAutoSound.en !== false };
 let autoSpeakTimer;
+const GOAL_START_DATE = { year: 2026, month: 10, day: 11 };
+const CARDS_PER_DAY = 10;
 
 function cleanForSpeech(text) {
   return text
@@ -188,6 +190,12 @@ function setAutoSound(language, enabled) {
 
 function updateKnownCount() {
   $('#knownCount').textContent = known.size;
+  const today = new Date();
+  const todayNumber = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  const startNumber = Date.UTC(GOAL_START_DATE.year, GOAL_START_DATE.month - 1, GOAL_START_DATE.day);
+  const elapsedDays = Math.floor((todayNumber - startNumber) / 86400000);
+  const goal = Math.min(cards.length, Math.max(0, elapsedDays + 1) * CARDS_PER_DAY);
+  $('#dailyGoal').textContent = goal;
   storage.set('mot-a-mot-known', [...known]);
 }
 
@@ -206,6 +214,7 @@ function renderCard() {
   $('#answerText').textContent = answer;
   $('#promptLanguage').textContent = promptCode;
   $('#answerLanguage').textContent = answerCode;
+  $('#cardNumber').textContent = `Carte nº ${cards.findIndex((item) => item.id === card.id) + 1}`;
   $('#directionFrom').textContent = promptCode;
   $('#directionTo').textContent = answerCode;
   $('#directionTitle').textContent = englishFirst ? 'De l’anglais vers le français' : 'Du français vers l’anglais';

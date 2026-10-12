@@ -7,7 +7,7 @@
     <meta name="description" content="Apprendre le vocabulaire français avec des cartes audio et des mini-tests." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=5" />
+    <link rel="stylesheet" href="styles.css?v=6" />
     <title>Mot à mot · Français</title>
   </head>
   <body>
@@ -17,7 +17,10 @@
         <span class="brand-mark">M</span>
         <span><strong>Mot à mot</strong><small>par The French School</small></span>
       </a>
-      <div class="streak" title="Série de révision"><span>◆</span> <b id="knownCount">0</b> maîtrisés</div>
+      <div class="streak" title="Objectif cumulatif : 10 cartes par jour depuis le 11 octobre 2026">
+        <span class="streak-icon">◆</span>
+        <div class="goal-copy"><strong><b id="knownCount">0</b> / <b id="dailyGoal">20</b> Je sais</strong><small>10/jour depuis le 11 oct.</small></div>
+      </div>
     </header>
 
     <main class="shell">
@@ -62,7 +65,10 @@
         </div>
 
         <article class="flashcard" id="flashcard">
-          <div class="card-topline"><span id="promptLanguage" class="language-pill">EN</span><span id="cardNote" class="card-note"></span></div>
+          <div class="card-topline">
+            <span id="promptLanguage" class="language-pill">EN</span>
+            <span class="card-meta"><span id="cardNumber" class="card-number">Carte nº 1</span><span id="cardNote" class="card-note"></span></span>
+          </div>
           <div class="card-content">
             <p id="promptText" class="term prompt"></p>
             <button class="audio-button" id="speakPrompt" aria-label="Écouter"><span>▶</span> Écouter</button>
@@ -147,6 +153,6 @@
 
     <footer><span>Prototype pédagogique</span><span>Audio généré par ton appareil</span></footer>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=6"></script>
   </body>
 </html>
