@@ -67,11 +67,10 @@ button { color: inherit; }
 }
 .streak-icon { color: var(--coral); }
 .goal-copy { display: grid; line-height: 1.05; }
-.goal-copy strong { display: flex; gap: 9px; white-space: nowrap; }
+.goal-copy strong { white-space: nowrap; }
 .goal-copy small { margin-top: 4px; color: var(--ink-soft); font-size: 9px; font-weight: 650; }
-.goal-delta.ahead { color: #2f7d62; }
-.goal-delta.behind { color: #a84531; }
-.goal-delta.met { color: var(--ink); }
+.goal-progress.met { color: #2f7d62; }
+.goal-progress.behind { color: #a84531; }
 
 .shell { width: min(880px, calc(100% - 36px)); margin: 38px auto 72px; }
 .hero { display: grid; grid-template-columns: 1.35fr .65fr; align-items: end; gap: 40px; margin: 30px 0 50px; }

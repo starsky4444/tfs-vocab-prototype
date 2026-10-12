@@ -7,7 +7,7 @@
     <meta name="description" content="Apprendre le vocabulaire français avec des cartes audio et des mini-tests." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=7" />
+    <link rel="stylesheet" href="styles.css?v=8" />
     <title>Mot à mot · Français</title>
   </head>
   <body>
@@ -20,8 +20,8 @@
       <div class="streak" title="Objectif cumulatif : 10 cartes par jour depuis le 11 octobre 2026">
         <span class="streak-icon">◆</span>
         <div class="goal-copy">
-          <strong><span>Je sais <b id="knownCount">0</b></span><span>Objectif <b id="goalDelta" class="goal-delta behind">-20</b></span></strong>
-          <small>Cible du jour : <b id="dailyGoal">20</b> · 10/jour</small>
+          <strong id="goalProgress" class="goal-progress behind"><b id="knownCount">0</b>/<b id="dailyGoal">20</b> Je sais</strong>
+          <small>Objectif · 10/jour</small>
         </div>
       </div>
     </header>
@@ -156,6 +156,6 @@
 
     <footer><span>Prototype pédagogique</span><span>Audio généré par ton appareil</span></footer>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=7"></script>
+    <script src="app.js?v=8"></script>
   </body>
 </html>

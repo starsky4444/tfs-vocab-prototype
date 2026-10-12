@@ -195,13 +195,10 @@ function updateKnownCount() {
   const startNumber = Date.UTC(GOAL_START_DATE.year, GOAL_START_DATE.month - 1, GOAL_START_DATE.day);
   const elapsedDays = Math.floor((todayNumber - startNumber) / 86400000);
   const goal = Math.min(cards.length, Math.max(0, elapsedDays + 1) * CARDS_PER_DAY);
-  const delta = known.size - goal;
   $('#dailyGoal').textContent = goal;
-  const goalDelta = $('#goalDelta');
-  goalDelta.textContent = delta > 0 ? `+${delta}` : `${delta}`;
-  goalDelta.classList.toggle('ahead', delta > 0);
-  goalDelta.classList.toggle('behind', delta < 0);
-  goalDelta.classList.toggle('met', delta === 0);
+  const goalProgress = $('#goalProgress');
+  goalProgress.classList.toggle('met', known.size >= goal);
+  goalProgress.classList.toggle('behind', known.size < goal);
   storage.set('mot-a-mot-known', [...known]);
 }
 
