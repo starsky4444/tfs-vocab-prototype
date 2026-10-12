@@ -116,6 +116,7 @@ let studyFilter = 'all';
 let quiz = null;
 let studyDirection = storage.get('mot-a-mot-direction', 'en-fr');
 let showBothLanguages = storage.get('mot-a-mot-show-both-languages', true) !== false;
+let shuffleEnabled = storage.get('mot-a-mot-shuffle-enabled', false) === true;
 const savedAutoSound = storage.get('mot-a-mot-auto-sound', {});
 let autoSound = { fr: savedAutoSound.fr !== false, en: savedAutoSound.en !== false };
 let autoSpeakTimer;
@@ -215,6 +216,11 @@ function cardsForFilter(filter = studyFilter) {
   return [...cards];
 }
 
+function buildDeck() {
+  const filteredCards = cardsForFilter();
+  return shuffleEnabled ? shuffle(filteredCards) : filteredCards;
+}
+
 function renderVocabularyList() {
   const filteredCards = cardsForFilter();
   const rows = $('#vocabularyRows');
@@ -277,7 +283,7 @@ function cycleStudyFilter() {
   clearPlayTimer();
   clearTimeout(autoSpeakTimer);
   if ('speechSynthesis' in window) speechSynthesis.cancel();
-  deck = cardsForFilter();
+  deck = buildDeck();
   cardIndex = 0;
   updateFilterButton();
   updatePlayButton();
@@ -306,6 +312,28 @@ function updateRevealModeButton() {
     : 'Afficher seulement la traduction après le reveal';
   $('#revealModeLabel').textContent = answerOnly ? 'Traduction seule' : '2 langues';
   $('#flashcard').classList.toggle('answer-only', revealed && answerOnly);
+}
+
+function updateShuffleButton() {
+  const button = $('#shuffleButton');
+  button.classList.toggle('active', shuffleEnabled);
+  button.setAttribute('aria-pressed', String(shuffleEnabled));
+  button.title = shuffleEnabled ? 'Désactiver le mélange des cartes' : 'Activer le mélange des cartes';
+  $('#shuffleStatus').textContent = shuffleEnabled ? 'ON' : 'OFF';
+}
+
+function toggleShuffle() {
+  shuffleEnabled = !shuffleEnabled;
+  storage.set('mot-a-mot-shuffle-enabled', shuffleEnabled);
+  playSessionActive = false;
+  playRunning = false;
+  clearPlayTimer();
+  deck = buildDeck();
+  cardIndex = 0;
+  updateShuffleButton();
+  updatePlayButton();
+  renderCard();
+  toast(shuffleEnabled ? 'Shuffle activé.' : 'Shuffle désactivé.');
 }
 
 function toggleRevealMode() {
@@ -436,7 +464,13 @@ function rateCard(rating) {
   if (rating === 'known') known.add(card.id); else known.delete(card.id);
   updateKnownCount();
   if (studyFilter !== 'all') {
-    deck = cardsForFilter();
+    const filteredCards = cardsForFilter();
+    if (shuffleEnabled) {
+      const allowedIds = new Set(filteredCards.map((item) => item.id));
+      deck = deck.filter((item) => allowedIds.has(item.id));
+    } else {
+      deck = filteredCards;
+    }
     if (!deck.length) {
       if (playSessionActive) {
         playSessionActive = false;
@@ -587,12 +621,12 @@ function applyImport() {
   const parsed = updateImportCount();
   if (parsed.length < 4) return toast('Ajoute au moins quatre cartes pour créer un test.');
   cards = parsed;
-  deck = [...cards];
   cardIndex = 0;
   known = new Set();
   playSessionActive = false;
   playRunning = false;
   studyFilter = 'all';
+  deck = buildDeck();
   clearPlayTimer();
   storage.set('mot-a-mot-cards', cards);
   updateKnownCount();
@@ -605,12 +639,12 @@ function applyImport() {
 function restoreSample() {
   localStorage.removeItem('mot-a-mot-cards');
   cards = parseTsv(DEFAULT_TSV);
-  deck = [...cards];
   cardIndex = 0;
   known = new Set();
   playSessionActive = false;
   playRunning = false;
   studyFilter = 'all';
+  deck = buildDeck();
   clearPlayTimer();
   updateKnownCount();
   updatePlayButton();
@@ -636,7 +670,7 @@ $('#flashcard').addEventListener('click', (event) => {
   if (!revealed && !event.target.closest('button')) revealCard();
 });
 $$('[data-rating]').forEach((button) => button.addEventListener('click', () => rateCard(button.dataset.rating)));
-$('#shuffleButton').addEventListener('click', () => { deck = shuffle(deck); cardIndex = 0; renderCard(); toast('Cartes mélangées.'); });
+$('#shuffleButton').addEventListener('click', toggleShuffle);
 $('#playButton').addEventListener('click', togglePlay);
 $('#revealModeButton').addEventListener('click', toggleRevealMode);
 $('#directionButton').addEventListener('click', toggleStudyDirection);
@@ -669,7 +703,9 @@ updateKnownCount();
 updateAutoSoundControls();
 updatePlayButton();
 updateRevealModeButton();
+updateShuffleButton();
 updateFilterButton();
+deck = buildDeck();
 renderCard();
 $('#importCount').textContent = cards.length;
 window.speechSynthesis?.getVoices();
