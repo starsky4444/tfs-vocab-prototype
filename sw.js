@@ -1,5 +1,5 @@
-const CACHE = 'mot-a-mot-v25';
-const ASSETS = ['./', './index.html', './styles.css?v=20', './catalog.js?v=3', './app.js?v=20', './firebase-client.js?v=2', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'mot-a-mot-v26';
+const ASSETS = ['./', './index.html', './styles.css?v=20', './catalog.js?v=4', './app.js?v=20', './firebase-client.js?v=2', './manifest.webmanifest', './icon.svg'];
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));
