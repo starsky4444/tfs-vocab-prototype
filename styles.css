@@ -147,20 +147,20 @@ h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight
 .play-button #playButtonIcon { color: var(--coral); }
 .play-button.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
 .play-button.active #playButtonIcon { color: var(--yellow); }
-.reveal-mode-button {
+.reveal-mode-button, .slow-french-button {
   height: 44px; display: inline-flex; align-items: center; gap: 7px; padding: 0 13px;
   border: 1px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer;
   color: var(--ink); font-size: 12px; font-weight: 850;
 }
-.reveal-mode-button > span:first-child { color: var(--coral); font-size: 16px; }
+.reveal-mode-button > span:first-child, .slow-french-button > span:first-child { color: var(--coral); font-size: 16px; }
 .shuffle-button {
   height: 44px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px;
   border: 1px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer;
   color: var(--ink); font-size: 11px; font-weight: 850;
 }
 .shuffle-button > span { color: var(--coral); font-size: 18px; }
-.reveal-mode-button.active, .shuffle-button.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
-.reveal-mode-button.active > span:first-child, .shuffle-button.active > span { color: var(--yellow); }
+.reveal-mode-button.active, .slow-french-button.active, .shuffle-button.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.reveal-mode-button.active > span:first-child, .slow-french-button.active > span:first-child, .shuffle-button.active > span { color: var(--yellow); }
 .direction-button {
   height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 13px;
   border: 1px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer;
@@ -227,7 +227,6 @@ h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight
 }
 .audio-button span { display: grid; place-items: center; width: 22px; height: 22px; color: white; background: var(--ink); border-radius: 50%; font-size: 9px; }
 .audio-button.french span { background: var(--coral); }
-.audio-button.subtle { background: transparent; }
 .audio-button.large { margin: 18px auto 24px; padding: 13px 18px; }
 .audio-button:active span { transform: scale(.9); }
 .answer-panel { text-align: center; animation: reveal .28s ease both; }

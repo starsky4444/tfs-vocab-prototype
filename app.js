@@ -146,6 +146,7 @@ let shuffleEnabled = storage.get('mot-a-mot-shuffle-enabled', false) === true;
 const savedAutoSound = storage.get('mot-a-mot-auto-sound', {});
 let autoSound = { fr: savedAutoSound.fr !== false, en: savedAutoSound.en !== false };
 let voicePreferences = storage.get('mot-a-mot-voice-preferences', { fr: '', en: '' });
+let slowFrench = storage.get('mot-a-mot-slow-french', false) === true;
 let autoSpeakTimer;
 const CARDS_PER_DAY = 10;
 const PLAY_DELAY_MS = 5000;
@@ -246,12 +247,16 @@ function setVoicePreference(language, value) {
   toast(voice ? `Voix ${family.toUpperCase()} : ${voice.name}` : 'Voix automatique activée.');
 }
 
+function speechRate(language, requestedRate = 0.92) {
+  return language.toLowerCase().startsWith('fr') && slowFrench ? Math.min(requestedRate, 0.68) : requestedRate;
+}
+
 function speak(text, language, rate = 0.92) {
   if (!('speechSynthesis' in window)) return toast('Audio non disponible sur ce navigateur.');
   speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(cleanForSpeech(text));
   utterance.lang = language;
-  utterance.rate = rate;
+  utterance.rate = speechRate(language, rate);
   utterance.voice = bestVoice(language);
   speechSynthesis.speak(utterance);
 }
@@ -275,6 +280,23 @@ function setAutoSound(language, enabled) {
   if (!enabled && 'speechSynthesis' in window) speechSynthesis.cancel();
   updateAutoSoundControls();
   toast(`Son automatique ${language.toUpperCase()} ${enabled ? 'activé' : 'désactivé'}.`);
+}
+
+function updateSlowFrenchButton() {
+  const button = $('#slowFrenchButton');
+  button.classList.toggle('active', slowFrench);
+  button.setAttribute('aria-pressed', String(slowFrench));
+  button.title = slowFrench
+    ? 'Prononciation française ralentie'
+    : 'Ralentir uniquement la prononciation française';
+}
+
+function toggleSlowFrench() {
+  slowFrench = !slowFrench;
+  storage.set('mot-a-mot-slow-french', slowFrench);
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  updateSlowFrenchButton();
+  toast(`Prononciation française ${slowFrench ? 'ralentie' : 'normale'}.`);
 }
 
 function updateKnownCount() {
@@ -893,6 +915,7 @@ $('#flashcard').addEventListener('click', (event) => {
 $$('[data-rating]').forEach((button) => button.addEventListener('click', () => rateCard(button.dataset.rating)));
 $('#shuffleButton').addEventListener('click', toggleShuffle);
 $('#playButton').addEventListener('click', togglePlay);
+$('#slowFrenchButton').addEventListener('click', toggleSlowFrench);
 $('#revealModeButton').addEventListener('click', toggleRevealMode);
 $('#directionButton').addEventListener('click', toggleStudyDirection);
 $('#previousCard').addEventListener('click', () => navigateCard(-1));
@@ -911,10 +934,6 @@ $('#speakAnswer').addEventListener('click', () => {
   const card = deck[cardIndex % deck.length];
   speak(studyDirection === 'en-fr' ? card.fr : card.en, studyDirection === 'en-fr' ? 'fr-CA' : 'en-US');
 });
-$('#speakAnswerSlow').addEventListener('click', () => {
-  const card = deck[cardIndex % deck.length];
-  speak(studyDirection === 'en-fr' ? card.fr : card.en, studyDirection === 'en-fr' ? 'fr-CA' : 'en-US', .68);
-});
 $('#startQuiz').addEventListener('click', () => startQuiz());
 $('#nextQuestion').addEventListener('click', nextQuestion);
 $('#questionAudio').addEventListener('click', () => speak(quiz.questions[quiz.index].card.fr, 'fr-CA'));
@@ -929,6 +948,7 @@ renderCatalog();
 updateKnownCount();
 updateAutoSoundControls();
 updatePlayButton();
+updateSlowFrenchButton();
 updateRevealModeButton();
 updateShuffleButton();
 updateFilterButton();

@@ -7,7 +7,7 @@
     <meta name="description" content="Apprendre le vocabulaire français avec des cartes audio et des mini-tests." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=22" />
+    <link rel="stylesheet" href="styles.css?v=23" />
     <title>Mot à mot · Français</title>
   </head>
   <body>
@@ -85,6 +85,7 @@
           </div>
 
           <div class="study-tools">
+            <button class="slow-french-button" id="slowFrenchButton" type="button" aria-pressed="false" title="Ralentir uniquement la prononciation française"><span aria-hidden="true">½</span> FR + lente</button>
             <button class="reveal-mode-button" id="revealModeButton" type="button" aria-pressed="false" title="Afficher les deux langues après le reveal"><span aria-hidden="true">◫</span> <span id="revealModeLabel">2 langues</span></button>
             <button class="shuffle-button" id="shuffleButton" type="button" aria-pressed="false" title="Activer le mélange des cartes"><span aria-hidden="true">↝</span> Shuffle</button>
             <button class="play-button" id="playButton" type="button" aria-pressed="false" title="Jouer les cartes du mode actif"><span id="playButtonIcon" aria-hidden="true">▶</span> <span id="playButtonLabel">Play</span></button>
@@ -116,7 +117,6 @@
             <p id="answerText" class="term answer"></p>
             <div class="audio-row">
               <button class="audio-button french" id="speakAnswer"><span>▶</span> Écouter</button>
-              <button class="audio-button subtle" id="speakAnswerSlow"><span>½</span> Lentement</button>
             </div>
           </div>
           <button id="revealButton" class="primary-button reveal">Voir la réponse</button>
@@ -227,7 +227,7 @@
       </div>
     </section>
     <script src="catalog.js?v=5"></script>
-    <script src="app.js?v=22"></script>
+    <script src="app.js?v=23"></script>
     <script type="module" src="firebase-client.js?v=2"></script>
   </body>
 </html>
