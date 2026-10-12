@@ -110,6 +110,7 @@ let cardIndex = 0;
 let revealed = false;
 let known = new Set(storage.get('mot-a-mot-known', []));
 let quiz = null;
+let studyDirection = storage.get('mot-a-mot-direction', 'en-fr');
 
 function cleanForSpeech(text) {
   return text
@@ -121,16 +122,43 @@ function cleanForSpeech(text) {
     .trim();
 }
 
+function scoreVoice(voice, language) {
+  const lang = voice.lang.toLowerCase();
+  const name = voice.name.toLowerCase();
+  let score = 0;
+  if (language.startsWith('en')) {
+    if (lang === 'en-us') score += 45;
+    else if (lang === 'en-ca') score += 40;
+    else if (lang === 'en-gb') score += 30;
+    else if (lang.startsWith('en')) score += 20;
+    if (/natural|premium|enhanced/.test(name)) score += 60;
+    if (/samantha|ava|allison|aaron|google us english|aria|jenny|guy/.test(name)) score += 50;
+    if (/compact|eloquence|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley/.test(name)) score -= 80;
+  } else {
+    if (lang === 'fr-ca') score += 45;
+    else if (lang === 'fr-fr') score += 35;
+    else if (lang.startsWith('fr')) score += 20;
+    if (/natural|premium|enhanced|amelie|thomas|audrey|google français/.test(name)) score += 45;
+    if (/compact|eloquence/.test(name)) score -= 80;
+  }
+  if (voice.default) score += 5;
+  return score;
+}
+
+function bestVoice(language) {
+  const family = language.slice(0, 2).toLowerCase();
+  return speechSynthesis.getVoices()
+    .filter((voice) => voice.lang.toLowerCase().startsWith(family))
+    .sort((a, b) => scoreVoice(b, language) - scoreVoice(a, language))[0] || null;
+}
+
 function speak(text, language, rate = 0.92) {
   if (!('speechSynthesis' in window)) return toast('Audio non disponible sur ce navigateur.');
   speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(cleanForSpeech(text));
   utterance.lang = language;
   utterance.rate = rate;
-  const voices = speechSynthesis.getVoices();
-  const exact = voices.find((voice) => voice.lang.toLowerCase() === language.toLowerCase());
-  const family = voices.find((voice) => voice.lang.toLowerCase().startsWith(language.slice(0, 2).toLowerCase()));
-  utterance.voice = exact || family || null;
+  utterance.voice = bestVoice(language);
   speechSynthesis.speak(utterance);
 }
 
@@ -142,16 +170,36 @@ function updateKnownCount() {
 function renderCard() {
   if (!deck.length) return;
   const card = deck[cardIndex % deck.length];
+  const englishFirst = studyDirection === 'en-fr';
+  const prompt = englishFirst ? card.en : card.fr;
+  const answer = englishFirst ? card.fr : card.en;
+  const promptCode = englishFirst ? 'EN' : 'FR';
+  const answerCode = englishFirst ? 'FR' : 'EN';
   revealed = false;
   $('#cardPosition').textContent = (cardIndex % deck.length) + 1;
   $('#cardTotal').textContent = deck.length;
-  $('#englishText').textContent = card.en;
-  $('#frenchText').textContent = card.fr;
+  $('#promptText').textContent = prompt;
+  $('#answerText').textContent = answer;
+  $('#promptLanguage').textContent = promptCode;
+  $('#answerLanguage').textContent = answerCode;
+  $('#directionFrom').textContent = promptCode;
+  $('#directionTo').textContent = answerCode;
+  $('#directionTitle').textContent = englishFirst ? 'De l’anglais vers le français' : 'Du français vers l’anglais';
+  $('#speakPrompt').setAttribute('aria-label', `Écouter en ${englishFirst ? 'anglais' : 'français'}`);
+  $('#speakAnswer').setAttribute('aria-label', `Écouter en ${englishFirst ? 'français' : 'anglais'}`);
+  $('#speakAnswer').classList.toggle('french', englishFirst);
   $('#cardNote').textContent = card.note || '';
   $('#answerPanel').hidden = true;
   $('#revealButton').hidden = false;
   $('#ratingActions').hidden = true;
   $('#flashcard').dataset.cardId = card.id;
+}
+
+function toggleStudyDirection() {
+  studyDirection = studyDirection === 'en-fr' ? 'fr-en' : 'en-fr';
+  storage.set('mot-a-mot-direction', studyDirection);
+  renderCard();
+  toast(studyDirection === 'en-fr' ? 'Anglais vers français.' : 'Français vers anglais.');
 }
 
 function revealCard() {
@@ -324,9 +372,19 @@ $('#flashcard').addEventListener('click', (event) => {
 });
 $$('[data-rating]').forEach((button) => button.addEventListener('click', () => rateCard(button.dataset.rating)));
 $('#shuffleButton').addEventListener('click', () => { deck = shuffle(deck); cardIndex = 0; renderCard(); toast('Cartes mélangées.'); });
-$('#speakEnglish').addEventListener('click', () => speak(deck[cardIndex % deck.length].en, 'en-CA'));
-$('#speakFrench').addEventListener('click', () => speak(deck[cardIndex % deck.length].fr, 'fr-CA'));
-$('#speakFrenchSlow').addEventListener('click', () => speak(deck[cardIndex % deck.length].fr, 'fr-CA', .68));
+$('#directionButton').addEventListener('click', toggleStudyDirection);
+$('#speakPrompt').addEventListener('click', () => {
+  const card = deck[cardIndex % deck.length];
+  speak(studyDirection === 'en-fr' ? card.en : card.fr, studyDirection === 'en-fr' ? 'en-US' : 'fr-CA');
+});
+$('#speakAnswer').addEventListener('click', () => {
+  const card = deck[cardIndex % deck.length];
+  speak(studyDirection === 'en-fr' ? card.fr : card.en, studyDirection === 'en-fr' ? 'fr-CA' : 'en-US');
+});
+$('#speakAnswerSlow').addEventListener('click', () => {
+  const card = deck[cardIndex % deck.length];
+  speak(studyDirection === 'en-fr' ? card.fr : card.en, studyDirection === 'en-fr' ? 'fr-CA' : 'en-US', .68);
+});
 $('#startQuiz').addEventListener('click', () => startQuiz());
 $('#nextQuestion').addEventListener('click', nextQuestion);
 $('#questionAudio').addEventListener('click', () => speak(quiz.questions[quiz.index].card.fr, 'fr-CA'));
@@ -339,6 +397,6 @@ $('#restoreSample').addEventListener('click', restoreSample);
 updateKnownCount();
 renderCard();
 $('#importCount').textContent = cards.length;
-speechSynthesis?.getVoices();
+window.speechSynthesis?.getVoices();
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});

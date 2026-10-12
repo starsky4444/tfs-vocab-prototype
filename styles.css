@@ -89,6 +89,14 @@ h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight
 .section-head { display: flex; justify-content: space-between; gap: 20px; align-items: end; margin-bottom: 18px; }
 .section-head h2 { font-family: inherit; font-size: 19px; font-weight: 750; letter-spacing: -.02em; }
 .step-label { margin: 0 0 5px; color: var(--ink-soft); font-size: 13px; }
+.study-tools { display: flex; align-items: center; gap: 8px; }
+.direction-button {
+  height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 13px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer;
+  font-size: 11px; font-weight: 900; letter-spacing: .06em;
+}
+.direction-button b { color: var(--coral); font-size: 17px; line-height: 1; transition: transform .2s ease; }
+.direction-button:active b { transform: rotate(180deg); }
 .icon-button { width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 50%; background: var(--paper); cursor: pointer; font-size: 22px; }
 
 .flashcard, .panel {
@@ -185,6 +193,9 @@ footer { max-width: 1080px; margin: 0 auto; padding: 24px 28px 36px; display: fl
   .hero-copy { max-width: 420px; }
   .mode-tabs { position: sticky; top: 8px; z-index: 5; backdrop-filter: blur(12px); }
   .tab { padding: 12px 8px; font-size: 13px; }
+  .section-head { align-items: center; }
+  .section-head h2 { max-width: 220px; }
+  .direction-button { padding: 0 10px; }
   .flashcard { min-height: 440px; padding: 22px 18px; border-radius: 22px; }
   .choices { grid-template-columns: 1fr; }
   .choice { min-height: 60px; }

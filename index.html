@@ -39,23 +39,28 @@
         <div class="section-head">
           <div>
             <p class="step-label" id="studyTitle">Carte <span id="cardPosition">1</span> sur <span id="cardTotal">0</span></p>
-            <h2>De l’anglais vers le français</h2>
+            <h2 id="directionTitle">De l’anglais vers le français</h2>
           </div>
-          <button class="icon-button" id="shuffleButton" aria-label="Mélanger les cartes" title="Mélanger">↝</button>
+          <div class="study-tools">
+            <button class="direction-button" id="directionButton" aria-label="Inverser les langues" title="Inverser les langues">
+              <span id="directionFrom">EN</span><b>⇄</b><span id="directionTo">FR</span>
+            </button>
+            <button class="icon-button" id="shuffleButton" aria-label="Mélanger les cartes" title="Mélanger">↝</button>
+          </div>
         </div>
 
         <article class="flashcard" id="flashcard">
-          <div class="card-topline"><span class="language-pill">EN</span><span id="cardNote" class="card-note"></span></div>
+          <div class="card-topline"><span id="promptLanguage" class="language-pill">EN</span><span id="cardNote" class="card-note"></span></div>
           <div class="card-content">
-            <p id="englishText" class="term prompt"></p>
-            <button class="audio-button" id="speakEnglish" aria-label="Écouter en anglais"><span>▶</span> Écouter</button>
+            <p id="promptText" class="term prompt"></p>
+            <button class="audio-button" id="speakPrompt" aria-label="Écouter"><span>▶</span> Écouter</button>
           </div>
           <div id="answerPanel" class="answer-panel" hidden>
-            <div class="answer-divider"><span>FR</span></div>
-            <p id="frenchText" class="term answer"></p>
+            <div class="answer-divider"><span id="answerLanguage">FR</span></div>
+            <p id="answerText" class="term answer"></p>
             <div class="audio-row">
-              <button class="audio-button french" id="speakFrench"><span>▶</span> Écouter</button>
-              <button class="audio-button subtle" id="speakFrenchSlow"><span>½</span> Lentement</button>
+              <button class="audio-button french" id="speakAnswer"><span>▶</span> Écouter</button>
+              <button class="audio-button subtle" id="speakAnswerSlow"><span>½</span> Lentement</button>
             </div>
           </div>
           <button id="revealButton" class="primary-button reveal">Voir la réponse</button>
