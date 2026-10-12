@@ -7,7 +7,7 @@
     <meta name="description" content="Apprendre le vocabulaire français avec des cartes audio et des mini-tests." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=16" />
+    <link rel="stylesheet" href="styles.css?v=17" />
     <title>Mot à mot · Français</title>
   </head>
   <body>
@@ -22,11 +22,27 @@
     <main class="shell">
       <section class="hero">
         <div>
-          <p class="eyebrow">A1 · Premiers échanges</p>
+          <p class="eyebrow" id="courseEyebrow">A1 · 2 sets</p>
           <h1>Le français qui<br /><em>reste en tête.</em></h1>
         </div>
         <p class="hero-copy">Écoute, retourne la carte et teste-toi. Trois minutes suffisent pour avancer.</p>
       </section>
+
+      <section class="catalog" aria-labelledby="catalogTitle">
+        <div class="catalog-heading">
+          <div>
+            <p class="eyebrow">Mes cours</p>
+            <h2 id="catalogTitle">Choisis ton set</h2>
+          </div>
+          <div id="courseTabs" class="course-tabs" role="tablist" aria-label="Niveaux de français"></div>
+        </div>
+        <div id="setList" class="set-list" aria-live="polite"></div>
+      </section>
+
+      <div class="active-set-heading">
+        <span id="activeCourseBadge">A1</span>
+        <strong id="activeSetTitle">Jours 1 + 2</strong>
+      </div>
 
       <nav class="mode-tabs" aria-label="Modes d’apprentissage">
         <button class="tab active" data-view="study">Cartes</button>
@@ -174,6 +190,7 @@
 
     <footer><span>Prototype pédagogique</span><span>Audio généré par ton appareil</span></footer>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=16"></script>
+    <script src="catalog.js?v=1"></script>
+    <script src="app.js?v=17"></script>
   </body>
 </html>

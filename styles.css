@@ -86,6 +86,30 @@ h1 em { color: var(--coral); font-weight: 500; }
 h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight: 500; }
 .hero-copy { margin: 0 0 7px; color: var(--ink-soft); font-size: 16px; line-height: 1.6; }
 
+.catalog { margin: -12px 0 28px; padding: 20px; border: 1px solid var(--line); border-radius: 24px; background: rgba(255,253,248,.7); }
+.catalog-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 15px; }
+.catalog-heading .eyebrow { margin-bottom: 6px; }
+.catalog-heading h2 { font-family: inherit; font-size: 20px; font-weight: 850; letter-spacing: -.02em; }
+.course-tabs { display: flex; gap: 6px; padding: 5px; border-radius: 14px; background: rgba(20,54,44,.08); }
+.course-tab { min-width: 50px; padding: 9px 12px; border: 0; border-radius: 10px; background: transparent; cursor: pointer; font-size: 12px; font-weight: 900; }
+.course-tab.active { background: var(--ink); color: var(--paper); box-shadow: 0 5px 14px rgba(20,54,44,.18); }
+.set-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.set-card { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 15px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); text-align: left; cursor: pointer; }
+.set-card:hover { border-color: rgba(20,54,44,.36); }
+.set-card.active { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.set-card-copy { min-width: 0; }
+.set-card-copy b, .set-card-copy small, .set-card-progress b, .set-card-progress small { display: block; }
+.set-card-copy b { margin-bottom: 4px; font-size: 14px; }
+.set-card-copy small { color: var(--ink-soft); line-height: 1.35; }
+.set-card-progress { flex: 0 0 auto; text-align: right; }
+.set-card-progress b { font-size: 14px; }
+.set-card-progress small { color: var(--ink-soft); font-size: 10px; }
+.set-empty { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding: 18px; border: 1px dashed var(--line); border-radius: 16px; color: var(--ink-soft); }
+.set-empty strong { color: var(--ink); }
+.active-set-heading { display: flex; align-items: center; gap: 10px; margin: 0 2px 14px; }
+.active-set-heading > span { padding: 6px 9px; border-radius: 9px; background: var(--coral); color: white; font-size: 11px; font-weight: 900; }
+.active-set-heading > strong { min-width: 0; font-size: 13px; line-height: 1.35; }
+
 .mode-tabs {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px;
   padding: 6px; margin-bottom: 34px; background: rgba(20,54,44,.08); border-radius: 18px;
@@ -270,6 +294,11 @@ footer { max-width: 1080px; margin: 0 auto; padding: 24px 28px 36px; display: fl
   .shell { width: min(100% - 24px, 880px); margin-top: 20px; }
   .hero { grid-template-columns: 1fr; gap: 18px; margin: 24px 5px 35px; }
   .hero-copy { max-width: 420px; }
+  .catalog { margin-top: -10px; padding: 15px; }
+  .catalog-heading { align-items: center; }
+  .catalog-heading h2 { font-size: 18px; }
+  .set-list { grid-template-columns: 1fr; }
+  .set-card { padding: 13px; }
   .mode-tabs { position: sticky; top: 8px; z-index: 5; backdrop-filter: blur(12px); }
   .tab { padding: 12px 8px; font-size: 13px; }
   .section-head { align-items: center; }

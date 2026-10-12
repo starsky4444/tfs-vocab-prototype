@@ -104,11 +104,25 @@ function shuffle(items) {
   return copy;
 }
 
-let cards = storage.get('mot-a-mot-cards', null) || parseTsv(DEFAULT_TSV);
+const CATALOG = window.VOCAB_CATALOG || [];
+const ALL_SETS = CATALOG.flatMap((course) => course.sets.map((set) => ({ ...set, courseId: course.id })));
+const DEFAULT_SET = ALL_SETS[0] || {
+  id: 'legacy-set', courseId: 'A1', shortTitle: 'Vocabulaire', title: 'Vocabulaire',
+  description: '', goalStartDate: '2026-10-11', tsv: DEFAULT_TSV,
+};
+let activeSet = ALL_SETS.find((set) => set.id === storage.get('mot-a-mot-active-set', DEFAULT_SET.id)) || DEFAULT_SET;
+let browsedCourseId = activeSet.courseId;
+
+function customCardsKey(setId = activeSet.id) { return `mot-a-mot-custom-cards:${setId}`; }
+function knownCardsKey(setId = activeSet.id) { return `mot-a-mot-known:${setId}`; }
+function cardsForSet(set = activeSet) { return storage.get(customCardsKey(set.id), null) || parseTsv(set.tsv); }
+
+let cards = cardsForSet();
 let deck = [...cards];
 let cardIndex = 0;
 let revealed = false;
-let known = new Set(storage.get('mot-a-mot-known', []));
+const legacyKnown = activeSet.id === DEFAULT_SET.id ? storage.get('mot-a-mot-known', []) : [];
+let known = new Set(storage.get(knownCardsKey(), legacyKnown));
 let playSessionActive = false;
 let playRunning = false;
 let playTimer;
@@ -120,7 +134,6 @@ let shuffleEnabled = storage.get('mot-a-mot-shuffle-enabled', false) === true;
 const savedAutoSound = storage.get('mot-a-mot-auto-sound', {});
 let autoSound = { fr: savedAutoSound.fr !== false, en: savedAutoSound.en !== false };
 let autoSpeakTimer;
-const GOAL_START_DATE = { year: 2026, month: 10, day: 11 };
 const CARDS_PER_DAY = 10;
 const PLAY_DELAY_MS = 5000;
 
@@ -199,15 +212,17 @@ function updateKnownCount() {
   $('#knownCount').textContent = known.size;
   const today = new Date();
   const todayNumber = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-  const startNumber = Date.UTC(GOAL_START_DATE.year, GOAL_START_DATE.month - 1, GOAL_START_DATE.day);
+  const [startYear, startMonth, startDay] = activeSet.goalStartDate.split('-').map(Number);
+  const startNumber = Date.UTC(startYear, startMonth - 1, startDay);
   const elapsedDays = Math.floor((todayNumber - startNumber) / 86400000);
   const goal = Math.min(cards.length, Math.max(0, elapsedDays + 1) * CARDS_PER_DAY);
   $('#dailyGoal').textContent = goal;
   const goalProgress = $('#goalProgress');
   goalProgress.classList.toggle('met', known.size >= goal);
   goalProgress.classList.toggle('behind', known.size < goal);
-  storage.set('mot-a-mot-known', [...known]);
+  storage.set(knownCardsKey(), [...known]);
   updateFilterButton();
+  renderCatalog();
 }
 
 function cardsForFilter(filter = studyFilter) {
@@ -257,6 +272,88 @@ function renderVocabularyList() {
     fragment.append(row);
   });
   rows.append(fragment);
+}
+
+function knownCountForSet(set) {
+  const fallback = set.id === DEFAULT_SET.id ? storage.get('mot-a-mot-known', []) : [];
+  return storage.get(knownCardsKey(set.id), fallback).length;
+}
+
+function renderCatalog() {
+  const courseTabs = $('#courseTabs');
+  const setList = $('#setList');
+  courseTabs.replaceChildren(...CATALOG.map((course) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'course-tab';
+    button.textContent = course.label;
+    button.dataset.course = course.id;
+    button.setAttribute('role', 'tab');
+    button.setAttribute('aria-selected', String(course.id === browsedCourseId));
+    button.classList.toggle('active', course.id === browsedCourseId);
+    button.addEventListener('click', () => {
+      browsedCourseId = course.id;
+      renderCatalog();
+    });
+    return button;
+  }));
+
+  const course = CATALOG.find((item) => item.id === browsedCourseId) || CATALOG[0];
+  if (!course?.sets.length) {
+    const empty = document.createElement('div');
+    empty.className = 'set-empty';
+    empty.innerHTML = `<strong>${escapeHtml(course?.label || '')}</strong><span>Les sets arrivent bientôt.</span>`;
+    setList.replaceChildren(empty);
+    return;
+  }
+
+  setList.replaceChildren(...course.sets.map((set) => {
+    const parsed = parseTsv(set.tsv);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'set-card';
+    button.classList.toggle('active', set.id === activeSet.id);
+    button.setAttribute('aria-pressed', String(set.id === activeSet.id));
+    button.innerHTML = `<span class="set-card-copy"><b>${escapeHtml(set.shortTitle)}</b><small>${escapeHtml(set.description)}</small></span><span class="set-card-progress"><b>${knownCountForSet(set)}/${parsed.length}</b><small>Je sais</small></span>`;
+    button.addEventListener('click', () => selectSet(set.id));
+    return button;
+  }));
+}
+
+function selectSet(setId) {
+  const nextSet = ALL_SETS.find((set) => set.id === setId);
+  if (!nextSet || nextSet.id === activeSet.id) return;
+  playSessionActive = false;
+  playRunning = false;
+  clearPlayTimer();
+  clearTimeout(autoSpeakTimer);
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  activeSet = nextSet;
+  browsedCourseId = nextSet.courseId;
+  storage.set('mot-a-mot-active-set', activeSet.id);
+  cards = cardsForSet();
+  known = new Set(storage.get(knownCardsKey(), []));
+  studyFilter = 'all';
+  cardIndex = 0;
+  deck = buildDeck();
+  quiz = null;
+  $('#quizIntro').hidden = false;
+  $('#quizGame').hidden = true;
+  $('#quizResult').hidden = true;
+  updateSetIdentity();
+  updateKnownCount();
+  updatePlayButton();
+  renderCard();
+  $('#importCount').textContent = cards.length;
+  toast(`${activeSet.courseId} · ${activeSet.shortTitle} : ${cards.length} cartes.`);
+}
+
+function updateSetIdentity() {
+  const course = CATALOG.find((item) => item.id === activeSet.courseId);
+  $('#courseEyebrow').textContent = `${activeSet.courseId} · ${course?.sets.length || 0} set(s)`;
+  $('#activeCourseBadge').textContent = activeSet.courseId;
+  $('#activeSetTitle').textContent = activeSet.title;
+  document.title = `${activeSet.courseId} · ${activeSet.shortTitle} | Mot à mot`;
 }
 
 function updateFilterButton() {
@@ -626,7 +723,7 @@ function applyImport() {
   studyFilter = 'all';
   deck = buildDeck();
   clearPlayTimer();
-  storage.set('mot-a-mot-cards', cards);
+  storage.set(customCardsKey(), cards);
   updateKnownCount();
   updatePlayButton();
   renderCard();
@@ -635,8 +732,8 @@ function applyImport() {
 }
 
 function restoreSample() {
-  localStorage.removeItem('mot-a-mot-cards');
-  cards = parseTsv(DEFAULT_TSV);
+  localStorage.removeItem(customCardsKey());
+  cards = parseTsv(activeSet.tsv);
   cardIndex = 0;
   known = new Set();
   playSessionActive = false;
@@ -649,7 +746,7 @@ function restoreSample() {
   $('#importText').value = DEFAULT_TSV;
   updateImportCount();
   renderCard();
-  toast('Liste de démonstration rétablie.');
+  toast('Set original rétabli.');
 }
 
 let toastTimer;
@@ -697,6 +794,8 @@ $('#importText').addEventListener('input', updateImportCount);
 $('#useImport').addEventListener('click', applyImport);
 $('#restoreSample').addEventListener('click', restoreSample);
 
+updateSetIdentity();
+renderCatalog();
 updateKnownCount();
 updateAutoSoundControls();
 updatePlayButton();
