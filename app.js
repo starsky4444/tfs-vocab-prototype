@@ -217,6 +217,7 @@ function renderCard() {
   $('#revealButton').hidden = false;
   $('#ratingActions').hidden = true;
   $('#flashcard').dataset.cardId = card.id;
+  $('#flashcard').classList.toggle('known-card', known.has(card.id));
   maybeSpeak(prompt, englishFirst ? 'en-US' : 'fr-CA');
 }
 
