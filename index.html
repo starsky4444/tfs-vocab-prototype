@@ -7,7 +7,7 @@
     <meta name="description" content="Apprendre le vocabulaire français avec des cartes audio et des mini-tests." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=21" />
+    <link rel="stylesheet" href="styles.css?v=22" />
     <title>Mot à mot · Français</title>
   </head>
   <body>
@@ -90,6 +90,17 @@
             <button class="play-button" id="playButton" type="button" aria-pressed="false" title="Jouer les cartes du mode actif"><span id="playButtonIcon" aria-hidden="true">▶</span> <span id="playButtonLabel">Play</span></button>
           </div>
         </div>
+
+        <details class="voice-settings" id="voiceSettings">
+          <summary>Choisir les voix</summary>
+          <div class="voice-settings-grid">
+            <label for="voiceFrench"><span>Français</span><select id="voiceFrench"><option value="">Automatique · naturelle</option></select></label>
+            <button id="previewVoiceFrench" type="button">Tester FR</button>
+            <label for="voiceEnglish"><span>English</span><select id="voiceEnglish"><option value="">Automatic · natural</option></select></label>
+            <button id="previewVoiceEnglish" type="button">Test EN</button>
+          </div>
+          <p>Les voix disponibles dépendent de l’appareil et du navigateur.</p>
+        </details>
 
         <article class="flashcard" id="flashcard">
           <div class="card-topline">
@@ -216,7 +227,7 @@
       </div>
     </section>
     <script src="catalog.js?v=5"></script>
-    <script src="app.js?v=21"></script>
+    <script src="app.js?v=22"></script>
     <script type="module" src="firebase-client.js?v=2"></script>
   </body>
 </html>

@@ -145,6 +145,7 @@ let showBothLanguages = storage.get('mot-a-mot-show-both-languages', true) !== f
 let shuffleEnabled = storage.get('mot-a-mot-shuffle-enabled', false) === true;
 const savedAutoSound = storage.get('mot-a-mot-auto-sound', {});
 let autoSound = { fr: savedAutoSound.fr !== false, en: savedAutoSound.en !== false };
+let voicePreferences = storage.get('mot-a-mot-voice-preferences', { fr: '', en: '' });
 let autoSpeakTimer;
 const CARDS_PER_DAY = 10;
 const PLAY_DELAY_MS = 5000;
@@ -168,25 +169,81 @@ function scoreVoice(voice, language) {
     else if (lang === 'en-ca') score += 40;
     else if (lang === 'en-gb') score += 30;
     else if (lang.startsWith('en')) score += 20;
-    if (/natural|premium|enhanced/.test(name)) score += 60;
+    if (name === 'google us english') score += 180;
+    else if (name === 'google uk english female') score += 160;
+    else if (name === 'google uk english male') score += 145;
+    if (/natural|premium|enhanced/.test(name)) score += 80;
     if (/samantha|ava|allison|aaron|google us english|aria|jenny|guy/.test(name)) score += 50;
     if (/compact|eloquence|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley/.test(name)) score -= 80;
   } else {
     if (lang === 'fr-ca') score += 45;
     else if (lang === 'fr-fr') score += 35;
     else if (lang.startsWith('fr')) score += 20;
-    if (/natural|premium|enhanced|amelie|thomas|audrey|google français/.test(name)) score += 45;
+    if (name === 'google français') score += 180;
+    if (/natural|premium|enhanced/.test(name)) score += 80;
+    if (/amelie|amélie|thomas|audrey|jacques|marie/.test(name)) score += 50;
     if (/compact|eloquence/.test(name)) score -= 80;
   }
   if (voice.default) score += 5;
   return score;
 }
 
-function bestVoice(language) {
+function voiceKey(voice) {
+  return `${voice.name}::${voice.lang}`;
+}
+
+function selectedVoice(language) {
   const family = language.slice(0, 2).toLowerCase();
+  const preferred = voicePreferences[family];
+  const voices = speechSynthesis.getVoices().filter((voice) => voice.lang.toLowerCase().startsWith(family));
+  return voices.find((voice) => voiceKey(voice) === preferred)
+    || voices.sort((a, b) => scoreVoice(b, language) - scoreVoice(a, language))[0]
+    || null;
+}
+
+function bestVoice(language) {
+  return selectedVoice(language);
+}
+
+function qualityVoices(language) {
+  const family = language.slice(0, 2).toLowerCase();
+  const novelty = /compact|eloquence|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley|albert|bahh|boing|bonnes nouvelles|bouffon|bulles|cloches|fred|junior|mauvaises nouvelles|murmure|orgue|ralph|superstar|trinoïdes|violoncelles|wobble|zarvox/i;
   return speechSynthesis.getVoices()
-    .filter((voice) => voice.lang.toLowerCase().startsWith(family))
-    .sort((a, b) => scoreVoice(b, language) - scoreVoice(a, language))[0] || null;
+    .filter((voice) => voice.lang.toLowerCase().startsWith(family) && !novelty.test(voice.name))
+    .sort((a, b) => scoreVoice(b, language) - scoreVoice(a, language) || a.name.localeCompare(b.name));
+}
+
+function populateVoiceSelect(select, language, label) {
+  const voices = qualityVoices(language);
+  const automatic = document.createElement('option');
+  automatic.value = '';
+  automatic.textContent = label;
+  const options = voices.map((voice) => {
+    const option = document.createElement('option');
+    option.value = voiceKey(voice);
+    option.textContent = `${voice.name} · ${voice.lang}`;
+    return option;
+  });
+  select.replaceChildren(automatic, ...options);
+  const family = language.slice(0, 2).toLowerCase();
+  select.value = options.some((option) => option.value === voicePreferences[family]) ? voicePreferences[family] : '';
+}
+
+function updateVoiceControls() {
+  if (!('speechSynthesis' in window)) {
+    $('#voiceSettings').hidden = true;
+    return;
+  }
+  populateVoiceSelect($('#voiceFrench'), 'fr-CA', 'Automatique · naturelle');
+  populateVoiceSelect($('#voiceEnglish'), 'en-US', 'Automatic · natural');
+}
+
+function setVoicePreference(language, value) {
+  const family = language.slice(0, 2).toLowerCase();
+  voicePreferences = { ...voicePreferences, [family]: value };
+  storage.set('mot-a-mot-voice-preferences', voicePreferences);
+  const voice = selectedVoice(language);
+  toast(voice ? `Voix ${family.toUpperCase()} : ${voice.name}` : 'Voix automatique activée.');
 }
 
 function speak(text, language, rate = 0.92) {
@@ -842,6 +899,10 @@ $('#previousCard').addEventListener('click', () => navigateCard(-1));
 $('#nextCard').addEventListener('click', () => navigateCard(1));
 $('#autoSoundFrench').addEventListener('change', (event) => setAutoSound('fr', event.target.checked));
 $('#autoSoundEnglish').addEventListener('change', (event) => setAutoSound('en', event.target.checked));
+$('#voiceFrench').addEventListener('change', (event) => setVoicePreference('fr-CA', event.target.value));
+$('#voiceEnglish').addEventListener('change', (event) => setVoicePreference('en-US', event.target.value));
+$('#previewVoiceFrench').addEventListener('click', () => speak('Bonjour, bienvenue dans ton cours de français.', 'fr-CA', .9));
+$('#previewVoiceEnglish').addEventListener('click', () => speak('Hello, welcome to your French course.', 'en-US', .9));
 $('#speakPrompt').addEventListener('click', () => {
   const card = deck[cardIndex % deck.length];
   speak(studyDirection === 'en-fr' ? card.en : card.fr, studyDirection === 'en-fr' ? 'en-US' : 'fr-CA');
@@ -875,6 +936,8 @@ deck = buildDeck();
 renderCard();
 $('#importCount').textContent = cards.length;
 window.speechSynthesis?.getVoices();
+updateVoiceControls();
+window.speechSynthesis?.addEventListener('voiceschanged', updateVoiceControls);
 
 window.MotAMot = {
   getProgress: currentProgress,
