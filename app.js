@@ -311,6 +311,46 @@ function knownCountForSet(set) {
   return storage.get(knownCardsKey(set.id), fallback).length;
 }
 
+function createSetCard(set) {
+  const parsed = catalogCards(set);
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'set-card';
+  button.classList.toggle('active', set.id === activeSet.id);
+  button.setAttribute('aria-pressed', String(set.id === activeSet.id));
+  button.innerHTML = `<span class="set-card-copy"><b>${escapeHtml(set.shortTitle)}</b><small>${escapeHtml(set.description)}</small></span><span class="set-card-progress"><b>${knownCountForSet(set)}/${parsed.length}</b><small>Je sais</small></span>`;
+  button.addEventListener('click', () => selectSet(set.id));
+  return button;
+}
+
+function createSetGroup(courseId, kind, title, description, sets) {
+  if (!sets.length) return null;
+  const section = document.createElement('section');
+  section.className = 'set-group';
+  section.dataset.setGroup = kind;
+
+  const heading = document.createElement('div');
+  heading.className = 'set-group-heading';
+  const copy = document.createElement('div');
+  const headingId = `set-group-${courseId.toLowerCase()}-${kind}`;
+  const label = document.createElement('h3');
+  label.id = headingId;
+  label.textContent = title;
+  const detail = document.createElement('p');
+  detail.textContent = description;
+  const count = document.createElement('span');
+  count.textContent = `${sets.length} ${sets.length > 1 ? 'listes' : 'liste'}`;
+  copy.append(label, detail);
+  heading.append(copy, count);
+
+  const grid = document.createElement('div');
+  grid.className = 'set-grid';
+  grid.append(...sets.map(createSetCard));
+  section.setAttribute('aria-labelledby', headingId);
+  section.append(heading, grid);
+  return section;
+}
+
 function renderCatalog() {
   const courseTabs = $('#courseTabs');
   const setList = $('#setList');
@@ -339,17 +379,13 @@ function renderCatalog() {
     return;
   }
 
-  setList.replaceChildren(...course.sets.map((set) => {
-    const parsed = catalogCards(set);
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'set-card';
-    button.classList.toggle('active', set.id === activeSet.id);
-    button.setAttribute('aria-pressed', String(set.id === activeSet.id));
-    button.innerHTML = `<span class="set-card-copy"><b>${escapeHtml(set.shortTitle)}</b><small>${escapeHtml(set.description)}</small></span><span class="set-card-progress"><b>${knownCountForSet(set)}/${parsed.length}</b><small>Je sais</small></span>`;
-    button.addEventListener('click', () => selectSet(set.id));
-    return button;
-  }));
+  const lessonSets = course.sets.filter((set) => !/^Quiz\b/i.test(set.title));
+  const quizSets = course.sets.filter((set) => /^Quiz\b/i.test(set.title));
+  const groups = [
+    createSetGroup(course.id, 'sets', 'Sets', 'Cours regroupés par blocs de deux jours', lessonSets),
+    createSetGroup(course.id, 'quiz', 'Quiz', 'Phrases classées par jour', quizSets),
+  ].filter(Boolean);
+  setList.replaceChildren(...groups);
 }
 
 function selectSet(setId) {
