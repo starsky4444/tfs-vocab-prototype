@@ -110,6 +110,9 @@ let cardIndex = 0;
 let revealed = false;
 let known = new Set(storage.get('mot-a-mot-known', []));
 let playUnknownOnly = false;
+let playRunning = false;
+let playTimer;
+let studyFilter = 'all';
 let quiz = null;
 let studyDirection = storage.get('mot-a-mot-direction', 'en-fr');
 const savedAutoSound = storage.get('mot-a-mot-auto-sound', {});
@@ -117,6 +120,7 @@ let autoSound = { fr: savedAutoSound.fr !== false, en: savedAutoSound.en !== fal
 let autoSpeakTimer;
 const GOAL_START_DATE = { year: 2026, month: 10, day: 11 };
 const CARDS_PER_DAY = 10;
+const PLAY_DELAY_MS = 5000;
 
 function cleanForSpeech(text) {
   return text
@@ -201,38 +205,123 @@ function updateKnownCount() {
   goalProgress.classList.toggle('met', known.size >= goal);
   goalProgress.classList.toggle('behind', known.size < goal);
   storage.set('mot-a-mot-known', [...known]);
+  updateFilterButton();
+}
+
+function cardsForFilter(filter = studyFilter) {
+  if (filter === 'unknown') return cards.filter((card) => !known.has(card.id));
+  if (filter === 'known') return cards.filter((card) => known.has(card.id));
+  return [...cards];
+}
+
+function updateFilterButton() {
+  const labels = { all: 'Toutes', unknown: 'À apprendre', known: 'Je sais' };
+  const descriptions = {
+    all: 'Afficher toutes les cartes',
+    unknown: 'Afficher seulement les cartes non maîtrisées',
+    known: 'Afficher seulement les cartes maîtrisées',
+  };
+  $('#filterButtonLabel').textContent = labels[studyFilter];
+  $('#filterButtonCount').textContent = cardsForFilter().length;
+  $('#filterButton').setAttribute('aria-label', descriptions[studyFilter]);
+}
+
+function cycleStudyFilter() {
+  const filters = ['all', 'unknown', 'known'];
+  studyFilter = filters[(filters.indexOf(studyFilter) + 1) % filters.length];
+  playUnknownOnly = false;
+  playRunning = false;
+  clearPlayTimer();
+  clearTimeout(autoSpeakTimer);
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  deck = cardsForFilter();
+  cardIndex = 0;
+  updateFilterButton();
+  updatePlayButton();
+  renderCard();
+  toast(`${$('#filterButtonLabel').textContent} : ${deck.length} carte(s).`);
 }
 
 function updatePlayButton() {
   const button = $('#playButton');
-  button.classList.toggle('active', playUnknownOnly);
-  button.setAttribute('aria-pressed', String(playUnknownOnly));
-  button.title = playUnknownOnly ? 'Quitter le mode Play' : 'Jouer seulement les cartes non maîtrisées';
+  button.classList.toggle('active', playRunning);
+  button.setAttribute('aria-pressed', String(playRunning));
+  $('#playButtonIcon').textContent = playRunning ? 'Ⅱ' : '▶';
+  $('#playButtonLabel').textContent = playRunning ? 'Pause' : 'Play';
+  button.title = playRunning
+    ? 'Mettre la lecture en pause'
+    : playUnknownOnly ? 'Reprendre la lecture' : 'Jouer seulement les cartes non maîtrisées';
+}
+
+function clearPlayTimer() {
+  clearTimeout(playTimer);
+  playTimer = undefined;
+}
+
+function schedulePlayStep() {
+  clearPlayTimer();
+  if (!playRunning || !playUnknownOnly || !deck.length) return;
+  playTimer = setTimeout(() => {
+    playTimer = undefined;
+    if (!revealed) {
+      revealCard();
+      return;
+    }
+    cardIndex = (cardIndex + 1) % deck.length;
+    renderCard();
+  }, PLAY_DELAY_MS);
 }
 
 function togglePlay() {
-  if (playUnknownOnly) {
-    playUnknownOnly = false;
-    deck = [...cards];
-    cardIndex = 0;
+  if (playRunning) {
+    playRunning = false;
+    clearPlayTimer();
+    clearTimeout(autoSpeakTimer);
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
     updatePlayButton();
-    renderCard();
-    toast('Toutes les cartes sont de nouveau affichées.');
+    toast('Play en pause.');
+    return;
+  }
+
+  if (playUnknownOnly) {
+    playRunning = true;
+    updatePlayButton();
+    schedulePlayStep();
+    toast('Play repris.');
     return;
   }
 
   const unknownCards = cards.filter((card) => !known.has(card.id));
   if (!unknownCards.length) return toast('Toutes les cartes sont déjà maîtrisées.');
+  studyFilter = 'unknown';
   playUnknownOnly = true;
+  playRunning = true;
   deck = shuffle(unknownCards);
   cardIndex = 0;
+  updateFilterButton();
   updatePlayButton();
   renderCard();
   toast(`Play : ${deck.length} carte(s) à travailler.`);
 }
 
 function renderCard() {
-  if (!deck.length) return;
+  if (!deck.length) {
+    revealed = false;
+    clearPlayTimer();
+    $('#cardPosition').textContent = '0';
+    $('#cardTotal').textContent = '0';
+    $('#promptLanguage').textContent = '✓';
+    $('#promptText').textContent = studyFilter === 'known' ? 'Aucune carte marquée « Je sais ».' : 'Aucune carte à travailler.';
+    $('#cardNumber').textContent = '';
+    $('#cardNote').textContent = '';
+    $('#speakPrompt').hidden = true;
+    $('#answerPanel').hidden = true;
+    $('#revealButton').hidden = true;
+    $('#ratingActions').hidden = true;
+    $('#flashcard').classList.remove('known-card');
+    $('#flashcard').dataset.cardId = '';
+    return;
+  }
   const card = deck[cardIndex % deck.length];
   const englishFirst = studyDirection === 'en-fr';
   const prompt = englishFirst ? card.en : card.fr;
@@ -254,12 +343,14 @@ function renderCard() {
   $('#speakAnswer').setAttribute('aria-label', `Écouter en ${englishFirst ? 'français' : 'anglais'}`);
   $('#speakAnswer').classList.toggle('french', englishFirst);
   $('#cardNote').textContent = card.note || '';
+  $('#speakPrompt').hidden = false;
   $('#answerPanel').hidden = true;
   $('#revealButton').hidden = false;
   $('#ratingActions').hidden = true;
   $('#flashcard').dataset.cardId = card.id;
   $('#flashcard').classList.toggle('known-card', known.has(card.id));
   maybeSpeak(prompt, englishFirst ? 'en-US' : 'fr-CA');
+  schedulePlayStep();
 }
 
 function toggleStudyDirection() {
@@ -270,6 +361,7 @@ function toggleStudyDirection() {
 }
 
 function revealCard() {
+  if (revealed) return;
   revealed = true;
   $('#answerPanel').hidden = false;
   $('#revealButton').hidden = true;
@@ -277,6 +369,7 @@ function revealCard() {
   const card = deck[cardIndex % deck.length];
   const englishFirst = studyDirection === 'en-fr';
   maybeSpeak(englishFirst ? card.fr : card.en, englishFirst ? 'fr-CA' : 'en-US');
+  schedulePlayStep();
 }
 
 function rateCard(rating) {
@@ -287,7 +380,9 @@ function rateCard(rating) {
     deck = deck.filter((item) => item.id !== card.id);
     if (!deck.length) {
       playUnknownOnly = false;
-      deck = [...cards];
+      playRunning = false;
+      clearPlayTimer();
+      deck = cardsForFilter();
       cardIndex = 0;
       updatePlayButton();
       renderCard();
@@ -295,6 +390,18 @@ function rateCard(rating) {
       return;
     }
     cardIndex %= deck.length;
+    renderCard();
+    return;
+  }
+  if (studyFilter !== 'all') {
+    deck = cardsForFilter();
+    if (!deck.length) {
+      cardIndex = 0;
+      renderCard();
+      return;
+    }
+    const cardRemains = deck.some((item) => item.id === card.id);
+    cardIndex = cardRemains ? (cardIndex + 1) % deck.length : cardIndex % deck.length;
     renderCard();
     return;
   }
@@ -309,6 +416,13 @@ function navigateCard(step) {
 }
 
 function switchView(name) {
+  if (name !== 'study' && playRunning) {
+    playRunning = false;
+    clearPlayTimer();
+    clearTimeout(autoSpeakTimer);
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    updatePlayButton();
+  }
   $$('.tab').forEach((tab) => tab.classList.toggle('active', tab.dataset.view === name));
   $$('.view').forEach((view) => view.classList.toggle('active', view.id === `${name}View`));
   if (name === 'import') {
@@ -428,6 +542,9 @@ function applyImport() {
   cardIndex = 0;
   known = new Set();
   playUnknownOnly = false;
+  playRunning = false;
+  studyFilter = 'all';
+  clearPlayTimer();
   storage.set('mot-a-mot-cards', cards);
   updateKnownCount();
   updatePlayButton();
@@ -443,6 +560,9 @@ function restoreSample() {
   cardIndex = 0;
   known = new Set();
   playUnknownOnly = false;
+  playRunning = false;
+  studyFilter = 'all';
+  clearPlayTimer();
   updateKnownCount();
   updatePlayButton();
   $('#importText').value = DEFAULT_TSV;
@@ -461,6 +581,7 @@ function toast(message) {
 }
 
 $$('.tab').forEach((tab) => tab.addEventListener('click', () => switchView(tab.dataset.view)));
+$('#filterButton').addEventListener('click', cycleStudyFilter);
 $('#revealButton').addEventListener('click', revealCard);
 $('#flashcard').addEventListener('click', (event) => {
   if (!revealed && !event.target.closest('button')) revealCard();
@@ -497,6 +618,7 @@ $('#restoreSample').addEventListener('click', restoreSample);
 updateKnownCount();
 updateAutoSoundControls();
 updatePlayButton();
+updateFilterButton();
 renderCard();
 $('#importCount').textContent = cards.length;
 window.speechSynthesis?.getVoices();

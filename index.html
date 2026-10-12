@@ -7,7 +7,7 @@
     <meta name="description" content="Apprendre le vocabulaire français avec des cartes audio et des mini-tests." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=9" />
+    <link rel="stylesheet" href="styles.css?v=11" />
     <title>Mot à mot · Français</title>
   </head>
   <body>
@@ -17,6 +17,9 @@
         <span class="brand-mark">M</span>
         <span><strong>Mot à mot</strong><small>par The French School</small></span>
       </a>
+      <button class="filter-button" id="filterButton" type="button" aria-label="Afficher toutes les cartes">
+        <span id="filterButtonLabel">Toutes</span><b id="filterButtonCount">70</b>
+      </button>
     </header>
 
     <main class="shell">
@@ -64,7 +67,7 @@
           </div>
 
           <div class="study-tools">
-            <button class="play-button" id="playButton" type="button" aria-pressed="false" title="Jouer seulement les cartes non maîtrisées"><span aria-hidden="true">▶</span> Play</button>
+            <button class="play-button" id="playButton" type="button" aria-pressed="false" title="Jouer seulement les cartes non maîtrisées"><span id="playButtonIcon" aria-hidden="true">▶</span> <span id="playButtonLabel">Play</span></button>
             <button class="direction-button" id="directionButton" aria-label="Inverser les langues" title="Inverser les langues">
               <span id="directionFrom">EN</span><b>⇄</b><span id="directionTo">FR</span>
             </button>
@@ -161,6 +164,6 @@
 
     <footer><span>Prototype pédagogique</span><span>Audio généré par ton appareil</span></footer>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=9"></script>
+    <script src="app.js?v=11"></script>
   </body>
 </html>

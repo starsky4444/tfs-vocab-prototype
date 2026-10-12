@@ -59,6 +59,13 @@ button { color: inherit; }
 .brand strong, .brand small { display: block; }
 .brand strong { font-size: 16px; letter-spacing: -.02em; }
 .brand small { color: var(--ink-soft); margin-top: 2px; font-size: 11px; }
+.filter-button {
+  min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border: 1px solid var(--line); border-radius: 999px; background: rgba(255,253,248,.72);
+  color: var(--ink); cursor: pointer; font-size: 12px; font-weight: 850;
+}
+.filter-button b { min-width: 24px; padding: 4px 7px; border-radius: 999px; background: var(--mint-bright); text-align: center; }
+.filter-button:hover { border-color: rgba(20,54,44,.35); }
 
 .streak {
   display: flex; align-items: center; gap: 6px;
@@ -106,9 +113,9 @@ h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight
   border: 1px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer;
   color: var(--ink); font-size: 12px; font-weight: 850;
 }
-.play-button span { color: var(--coral); }
+.play-button #playButtonIcon { color: var(--coral); }
 .play-button.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
-.play-button.active span { color: var(--yellow); }
+.play-button.active #playButtonIcon { color: var(--yellow); }
 .direction-button {
   height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 13px;
   border: 1px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer;
@@ -231,6 +238,7 @@ footer { max-width: 1080px; margin: 0 auto; padding: 24px 28px 36px; display: fl
 @media (max-width: 680px) {
   .topbar { padding: 18px; }
   .brand small { display: none; }
+  .filter-button { min-height: 40px; padding: 6px 9px; }
   .streak { font-size: 11px; }
   .shell { width: min(100% - 24px, 880px); margin-top: 20px; }
   .hero { grid-template-columns: 1fr; gap: 18px; margin: 24px 5px 35px; }
