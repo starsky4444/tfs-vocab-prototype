@@ -7,7 +7,7 @@
     <meta name="description" content="Apprendre le vocabulaire français avec des cartes audio et des mini-tests." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=11" />
+    <link rel="stylesheet" href="styles.css?v=12" />
     <title>Mot à mot · Français</title>
   </head>
   <body>
@@ -17,9 +17,6 @@
         <span class="brand-mark">M</span>
         <span><strong>Mot à mot</strong><small>par The French School</small></span>
       </a>
-      <button class="filter-button" id="filterButton" type="button" aria-label="Afficher toutes les cartes">
-        <span id="filterButtonLabel">Toutes</span><b id="filterButtonCount">70</b>
-      </button>
     </header>
 
     <main class="shell">
@@ -46,16 +43,13 @@
         </div>
 
         <div class="study-controls-row" aria-label="Réglages des cartes">
-          <div class="streak" title="Objectif cumulatif : 10 cartes par jour depuis le 11 octobre 2026">
-            <span class="streak-icon">◆</span>
-            <div class="goal-copy">
-              <strong id="goalProgress" class="goal-progress behind"><b id="knownCount">0</b>/<b id="dailyGoal">20</b> Je sais</strong>
-              <small>Objectif · 10/jour</small>
-            </div>
-          </div>
+          <button class="filter-button filter-button-merged" id="filterButton" type="button" data-filter="all" aria-label="Afficher toutes les cartes">
+            <span class="filter-selection"><span id="filterButtonLabel">Toutes</span><b id="filterButtonCount">70</b></span>
+            <span class="filter-divider" aria-hidden="true"></span>
+            <strong id="goalProgress" class="filter-goal goal-progress behind"><b id="knownCount">0</b>/<b id="dailyGoal">20</b> Je sais</strong>
+          </button>
 
           <div class="audio-preferences" aria-label="Réglages du son automatique">
-            <span>Son auto</span>
             <label class="sound-toggle">
               <input id="autoSoundFrench" type="checkbox" checked />
               <span>FR</span>
@@ -67,7 +61,7 @@
           </div>
 
           <div class="study-tools">
-            <button class="play-button" id="playButton" type="button" aria-pressed="false" title="Jouer seulement les cartes non maîtrisées"><span id="playButtonIcon" aria-hidden="true">▶</span> <span id="playButtonLabel">Play</span></button>
+            <button class="play-button" id="playButton" type="button" aria-pressed="false" title="Jouer les cartes du mode actif"><span id="playButtonIcon" aria-hidden="true">▶</span> <span id="playButtonLabel">Play</span></button>
             <button class="direction-button" id="directionButton" aria-label="Inverser les langues" title="Inverser les langues">
               <span id="directionFrom">EN</span><b>⇄</b><span id="directionTo">FR</span>
             </button>
@@ -164,6 +158,6 @@
 
     <footer><span>Prototype pédagogique</span><span>Audio généré par ton appareil</span></footer>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=11"></script>
+    <script src="app.js?v=12"></script>
   </body>
 </html>

@@ -109,7 +109,7 @@ let deck = [...cards];
 let cardIndex = 0;
 let revealed = false;
 let known = new Set(storage.get('mot-a-mot-known', []));
-let playUnknownOnly = false;
+let playSessionActive = false;
 let playRunning = false;
 let playTimer;
 let studyFilter = 'all';
@@ -223,13 +223,14 @@ function updateFilterButton() {
   };
   $('#filterButtonLabel').textContent = labels[studyFilter];
   $('#filterButtonCount').textContent = cardsForFilter().length;
+  $('#filterButton').dataset.filter = studyFilter;
   $('#filterButton').setAttribute('aria-label', descriptions[studyFilter]);
 }
 
 function cycleStudyFilter() {
   const filters = ['all', 'unknown', 'known'];
   studyFilter = filters[(filters.indexOf(studyFilter) + 1) % filters.length];
-  playUnknownOnly = false;
+  playSessionActive = false;
   playRunning = false;
   clearPlayTimer();
   clearTimeout(autoSpeakTimer);
@@ -250,7 +251,7 @@ function updatePlayButton() {
   $('#playButtonLabel').textContent = playRunning ? 'Pause' : 'Play';
   button.title = playRunning
     ? 'Mettre la lecture en pause'
-    : playUnknownOnly ? 'Reprendre la lecture' : 'Jouer seulement les cartes non maîtrisées';
+    : playSessionActive ? 'Reprendre la lecture' : `Jouer les cartes du mode ${$('#filterButtonLabel').textContent}`;
 }
 
 function clearPlayTimer() {
@@ -260,7 +261,7 @@ function clearPlayTimer() {
 
 function schedulePlayStep() {
   clearPlayTimer();
-  if (!playRunning || !playUnknownOnly || !deck.length) return;
+  if (!playRunning || !playSessionActive || !deck.length) return;
   playTimer = setTimeout(() => {
     playTimer = undefined;
     if (!revealed) {
@@ -283,7 +284,7 @@ function togglePlay() {
     return;
   }
 
-  if (playUnknownOnly) {
+  if (playSessionActive) {
     playRunning = true;
     updatePlayButton();
     schedulePlayStep();
@@ -291,17 +292,12 @@ function togglePlay() {
     return;
   }
 
-  const unknownCards = cards.filter((card) => !known.has(card.id));
-  if (!unknownCards.length) return toast('Toutes les cartes sont déjà maîtrisées.');
-  studyFilter = 'unknown';
-  playUnknownOnly = true;
+  if (!deck.length) return toast('Aucune carte dans ce mode.');
+  playSessionActive = true;
   playRunning = true;
-  deck = shuffle(unknownCards);
-  cardIndex = 0;
-  updateFilterButton();
   updatePlayButton();
   renderCard();
-  toast(`Play : ${deck.length} carte(s) à travailler.`);
+  toast(`Play · ${$('#filterButtonLabel').textContent} : ${deck.length} carte(s).`);
 }
 
 function renderCard() {
@@ -376,26 +372,16 @@ function rateCard(rating) {
   const card = deck[cardIndex % deck.length];
   if (rating === 'known') known.add(card.id); else known.delete(card.id);
   updateKnownCount();
-  if (playUnknownOnly && rating === 'known') {
-    deck = deck.filter((item) => item.id !== card.id);
-    if (!deck.length) {
-      playUnknownOnly = false;
-      playRunning = false;
-      clearPlayTimer();
-      deck = cardsForFilter();
-      cardIndex = 0;
-      updatePlayButton();
-      renderCard();
-      toast('Play terminé : toutes les cartes sont maîtrisées.');
-      return;
-    }
-    cardIndex %= deck.length;
-    renderCard();
-    return;
-  }
   if (studyFilter !== 'all') {
     deck = cardsForFilter();
     if (!deck.length) {
+      if (playSessionActive) {
+        playSessionActive = false;
+        playRunning = false;
+        clearPlayTimer();
+        updatePlayButton();
+        toast('Play terminé : aucune carte ne reste dans ce mode.');
+      }
       cardIndex = 0;
       renderCard();
       return;
@@ -541,7 +527,7 @@ function applyImport() {
   deck = [...cards];
   cardIndex = 0;
   known = new Set();
-  playUnknownOnly = false;
+  playSessionActive = false;
   playRunning = false;
   studyFilter = 'all';
   clearPlayTimer();
@@ -559,7 +545,7 @@ function restoreSample() {
   deck = [...cards];
   cardIndex = 0;
   known = new Set();
-  playUnknownOnly = false;
+  playSessionActive = false;
   playRunning = false;
   studyFilter = 'all';
   clearPlayTimer();

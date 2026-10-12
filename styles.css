@@ -61,21 +61,19 @@ button { color: inherit; }
 .brand small { color: var(--ink-soft); margin-top: 2px; font-size: 11px; }
 .filter-button {
   min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px;
-  border: 1px solid var(--line); border-radius: 999px; background: rgba(255,253,248,.72);
+  border: 1px solid var(--line); border-radius: 999px; background: var(--paper);
   color: var(--ink); cursor: pointer; font-size: 12px; font-weight: 850;
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
 }
-.filter-button b { min-width: 24px; padding: 4px 7px; border-radius: 999px; background: var(--mint-bright); text-align: center; }
+.filter-button b { font-weight: 900; }
+.filter-button .filter-selection { display: inline-flex; align-items: center; gap: 7px; }
+.filter-button .filter-selection > b { min-width: 24px; padding: 4px 7px; border-radius: 999px; background: rgba(20,54,44,.08); text-align: center; }
+.filter-button .filter-divider { width: 1px; height: 22px; background: currentColor; opacity: .18; }
+.filter-button .filter-goal { white-space: nowrap; }
+.filter-button[data-filter="all"] { background: var(--paper); color: var(--ink); }
+.filter-button[data-filter="unknown"] { border-color: rgba(168,69,49,.35); background: var(--coral-soft); color: #943b29; }
+.filter-button[data-filter="known"] { border-color: rgba(47,125,98,.36); background: var(--mint-bright); color: #286b54; }
 .filter-button:hover { border-color: rgba(20,54,44,.35); }
-
-.streak {
-  display: flex; align-items: center; gap: 6px;
-  padding: 9px 13px; border: 1px solid var(--line); border-radius: 999px;
-  background: rgba(255,253,248,.6); font-size: 13px;
-}
-.streak-icon { color: var(--coral); }
-.goal-copy { display: grid; line-height: 1.05; }
-.goal-copy strong { white-space: nowrap; }
-.goal-copy small { margin-top: 4px; color: var(--ink-soft); font-size: 9px; font-weight: 650; }
 .goal-progress.met { color: #2f7d62; }
 .goal-progress.behind { color: #a84531; }
 
