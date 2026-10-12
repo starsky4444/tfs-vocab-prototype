@@ -1,0 +1,12 @@
+{
+  "name": "Mot à mot · Français",
+  "short_name": "Mot à mot",
+  "description": "Cartes audio et mini-tests pour apprendre le vocabulaire français.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6f0e4",
+  "theme_color": "#12372a",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

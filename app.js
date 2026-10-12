@@ -1,0 +1,344 @@
+const DEFAULT_TSV = `ça va ?, comment ça va ?\thow are you?
+pas mal, pas pire (Qc)\tnot bad
+et toi ?, et vous ?\tand you? Friendly and formal
+Comment dit-on ... en français ?\tHow do we say ... in French?
+Ça veut dire quoi ... ?\tWhat does it mean?
+Comment tu t'appelles ? C'est quoi ton nom ?\tWhat's your name? Friendly
+Comment vous vous appelez ? Quel est votre nom ?\tWhat's your name? Formal or plural
+Je m'appelle ... , Moi c'est ...\tMy name is
+Peux-tu répéter ? Pouvez-vous répéter ?\tCould you repeat?
+enchanté, enchantée / pareillement\tnice to meet you / likewise
+Comment ça s'écrit ?\tHow does it spell?
+mon prénom / mon nom de famille\tmy first name / my last name
+V comme Valérie\tV like Valery
+Tu viens d'où ? Vous venez d'où ?\tWhere are you from?
+Je suis Canadien, Canadienne\tI'm from Canada.
+J'habite à Montréal.\tI live in Montreal.
+Je parle anglais / Je ne parle pas français.\tI speak English / I don't speak French
+J'apprends le français pour ... la vie à Montréal / le travail / la famille\tI'm learning French in order to/for ... life in Montreal / work / family
+oui / ouais / non\tyes / yeah / no
+peut-être / bien sûr\tmaybe / of course
+Je suis d'accord.\tI agree.
+Je comprends.\tI understand
+mais / et / si\tbut / and / if
+pourquoi ? / parce que\twhy? / because
+madame / monsieur\tma'am / sir
+Salut ! (also bye), allô ! (Qc, also on the phone)\thi! Casual
+bonjour / bonne journée\thi / have a good day
+bon après-midi\tHave a good afternoon
+bonsoir / bonne soirée\tgood evening / have a good evening
+bonne nuit\tsleep well
+au revoir / à la prochaine\tgoodbye / see you next time
+à bientôt / à demain\tsee you soon / see you tomorrow
+s'il te plaît, s'il vous plaît / merci\tplease / thanks
+bienvenue (Québec), pas de quoi, de rien\tyou're welcome
+désolé(e), pardon, excuse-moi, excusez-moi\tsorry
+Tu viens d'où? Tu es d'où?/Vous venez d'où? Vous êtes d'où?\tWhere are you from?
+un pays, une province, un État, une ville\ta country, a province, a State, a city
+le Sud, le Nord, l'Est, l'Ouest\tsouth, north, east, west
+l'Allemagne, allemand, allemande\tGermany, German
+l'Angleterre, anglais, anglaise\tEngland, English
+l'Australie, australien, australienne\tAustralia, Australian
+le Brésil, brésilien, brésilienne\tBrazil, Brazilian
+le Canada, canadien, canadienne\tCanada, Canadian
+la Chine, chinois, chinoise\tChina, Chinese
+les États-Unis, américain, américaine\tUnited States, American
+la France, français, française\tFrance, French
+l'Inde, indien, indienne\tIndia, Indian
+l'Italie, italien, italienne\tItaly, Italian
+le Japon, japonais, japonaise\tJapan, Japanese
+le Mexique, mexicain, mexicaine\tMexico, Mexican
+le Nigéria, nigérian, nigériane\tNigeria, Nigerian
+les Philippines, philippin, philippine\tPhilippines, Filipino, Filipina
+le Québec, québécois, québécoise\tQuebec, Quebecker
+la Russie, russe\tRussia, Russian
+l'Ukraine, ukrainien, ukrainienne\tUkraine, Ukrainian
+Tu fais quoi dans la vie?, C'est quoi ta job (casual)? / Vous faites quoi dans la vie?\tWhat do you do for a living?
+un travail, un contrat, un salaire\ta job, contract, a salary
+Je ne travaille pas pour le moment.\tI am not working at the moment.
+en télétravail, au bureau\tremote work, at the office
+étudiant, étudiante\tstudent
+médecin, docteur, docteure\tdoctor
+infirmier, infirmière / pharmacien, pharmacienne\tnurse / pharmacist
+professeur, professeure, enseignant, enseignante\tteacher
+ingénieur, ingénieure\tengineer
+je travaille en T.I.\tI work in IT
+avocat, avocate\tlawyer, avocado (masc.)
+serveur, serveuse / vendeur, vendeuse\twaiter, waitress / person who works in sales
+acteur, actrice / chanteur, chanteuse\tactor / singer
+développeur, développeuse / graphiste\tdeveloper / graphic designer
+directeur, directrice / adjoint, adjointe\tdirector, manager / assistant`;
+
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => [...document.querySelectorAll(selector)];
+const storage = {
+  get(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } },
+  set(key, value) { localStorage.setItem(key, JSON.stringify(value)); },
+};
+
+function parseTsv(input) {
+  return input.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).map((line, index) => {
+    const [fr, ...englishParts] = line.split('\t');
+    let en = englishParts.join('\t').trim();
+    if (!fr?.trim() || !en) return null;
+    let note = '';
+    const noteMatch = en.match(/\s+(Friendly and formal|Friendly|Formal or plural|Casual)$/i);
+    if (noteMatch) {
+      note = noteMatch[1];
+      en = en.slice(0, noteMatch.index).trim();
+    }
+    return { id: `${index}-${slug(fr)}`, fr: fr.trim(), en, note };
+  }).filter(Boolean);
+}
+
+function slug(text) {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 42);
+}
+
+function shuffle(items) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+let cards = storage.get('mot-a-mot-cards', null) || parseTsv(DEFAULT_TSV);
+let deck = [...cards];
+let cardIndex = 0;
+let revealed = false;
+let known = new Set(storage.get('mot-a-mot-known', []));
+let quiz = null;
+
+function cleanForSpeech(text) {
+  return text
+    .replace(/\((?:Qc|Québec|casual|also[^)]*)\)/gi, '')
+    .replace(/\.{3}/g, ' ')
+    .replace(/\s*\/\s*/g, '. ')
+    .replace(/\s*,\s*/g, ', ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function speak(text, language, rate = 0.92) {
+  if (!('speechSynthesis' in window)) return toast('Audio non disponible sur ce navigateur.');
+  speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(cleanForSpeech(text));
+  utterance.lang = language;
+  utterance.rate = rate;
+  const voices = speechSynthesis.getVoices();
+  const exact = voices.find((voice) => voice.lang.toLowerCase() === language.toLowerCase());
+  const family = voices.find((voice) => voice.lang.toLowerCase().startsWith(language.slice(0, 2).toLowerCase()));
+  utterance.voice = exact || family || null;
+  speechSynthesis.speak(utterance);
+}
+
+function updateKnownCount() {
+  $('#knownCount').textContent = known.size;
+  storage.set('mot-a-mot-known', [...known]);
+}
+
+function renderCard() {
+  if (!deck.length) return;
+  const card = deck[cardIndex % deck.length];
+  revealed = false;
+  $('#cardPosition').textContent = (cardIndex % deck.length) + 1;
+  $('#cardTotal').textContent = deck.length;
+  $('#englishText').textContent = card.en;
+  $('#frenchText').textContent = card.fr;
+  $('#cardNote').textContent = card.note || '';
+  $('#answerPanel').hidden = true;
+  $('#revealButton').hidden = false;
+  $('#ratingActions').hidden = true;
+  $('#flashcard').dataset.cardId = card.id;
+}
+
+function revealCard() {
+  revealed = true;
+  $('#answerPanel').hidden = false;
+  $('#revealButton').hidden = true;
+  $('#ratingActions').hidden = false;
+}
+
+function rateCard(rating) {
+  const card = deck[cardIndex % deck.length];
+  if (rating === 'known') known.add(card.id); else known.delete(card.id);
+  updateKnownCount();
+  cardIndex = (cardIndex + 1) % deck.length;
+  renderCard();
+}
+
+function switchView(name) {
+  $$('.tab').forEach((tab) => tab.classList.toggle('active', tab.dataset.view === name));
+  $$('.view').forEach((view) => view.classList.toggle('active', view.id === `${name}View`));
+  if (name === 'import') {
+    $('#importText').value = cards.map((card) => `${card.fr}\t${card.en}${card.note ? ` ${card.note}` : ''}`).join('\n');
+    updateImportCount();
+  }
+}
+
+function makeQuestions(source = cards, count = 10) {
+  const chosen = shuffle(source).slice(0, Math.min(count, source.length));
+  return chosen.map((card, index) => {
+    const kind = index % 3 === 0 ? 'listen-fr' : index % 3 === 1 ? 'en-fr' : 'fr-en';
+    const answerField = kind === 'en-fr' ? 'fr' : 'en';
+    const distractors = shuffle(cards.filter((item) => item.id !== card.id)).slice(0, 3).map((item) => item[answerField]);
+    return { card, kind, answer: card[answerField], choices: shuffle([card[answerField], ...distractors]) };
+  });
+}
+
+function startQuiz(source = cards) {
+  quiz = { questions: makeQuestions(source), index: 0, score: 0, mistakes: [], answered: false };
+  $('#quizIntro').hidden = true;
+  $('#quizResult').hidden = true;
+  $('#quizGame').hidden = false;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const question = quiz.questions[quiz.index];
+  quiz.answered = false;
+  $('#quizPosition').textContent = quiz.index + 1;
+  $('#quizScore').textContent = quiz.score;
+  $('#quizProgress').style.width = `${((quiz.index + 1) / quiz.questions.length) * 100}%`;
+  $('#feedback').hidden = true;
+  $('#feedback').classList.remove('bad');
+  $('#nextQuestion').hidden = true;
+  $('#questionAudio').hidden = question.kind !== 'listen-fr';
+  if (question.kind === 'listen-fr') {
+    $('#questionKind').textContent = 'Écoute et choisis la traduction';
+    $('#questionPrompt').textContent = 'Quelle phrase as-tu entendue ?';
+    setTimeout(() => speak(question.card.fr, 'fr-CA'), 220);
+  } else if (question.kind === 'en-fr') {
+    $('#questionKind').textContent = 'De l’anglais vers le français';
+    $('#questionPrompt').textContent = question.card.en;
+  } else {
+    $('#questionKind').textContent = 'Du français vers l’anglais';
+    $('#questionPrompt').textContent = question.card.fr;
+  }
+  $('#choices').replaceChildren(...question.choices.map((choice) => {
+    const button = document.createElement('button');
+    button.className = 'choice';
+    button.textContent = choice;
+    button.addEventListener('click', () => answerQuestion(button, choice));
+    return button;
+  }));
+}
+
+function answerQuestion(button, choice) {
+  if (quiz.answered) return;
+  quiz.answered = true;
+  const question = quiz.questions[quiz.index];
+  const correct = choice === question.answer;
+  if (correct) quiz.score += 1;
+  else quiz.mistakes.push(question.card);
+  $$('#choices .choice').forEach((item) => {
+    item.disabled = true;
+    if (item.textContent === question.answer) item.classList.add('correct');
+  });
+  if (!correct) button.classList.add('wrong');
+  const feedback = $('#feedback');
+  feedback.hidden = false;
+  feedback.classList.toggle('bad', !correct);
+  feedback.textContent = correct ? 'Exact.' : `La bonne réponse : ${question.answer}`;
+  $('#quizScore').textContent = quiz.score;
+  $('#nextQuestion').textContent = quiz.index === quiz.questions.length - 1 ? 'Voir mon résultat' : 'Question suivante';
+  $('#nextQuestion').hidden = false;
+}
+
+function nextQuestion() {
+  if (quiz.index < quiz.questions.length - 1) {
+    quiz.index += 1;
+    renderQuestion();
+  } else showResult();
+}
+
+function showResult() {
+  $('#quizGame').hidden = true;
+  $('#quizResult').hidden = false;
+  const percent = Math.round((quiz.score / quiz.questions.length) * 100);
+  $('#resultScore').textContent = `${percent}%`;
+  $('#resultTitle').textContent = percent >= 80 ? 'C’est solide.' : percent >= 60 ? 'Tu avances.' : 'On révise les pièges.';
+  $('#resultCopy').textContent = `${quiz.score} bonne(s) réponse(s) sur ${quiz.questions.length}.`;
+  $('#mistakeList').replaceChildren(...quiz.mistakes.map((card) => {
+    const item = document.createElement('div');
+    item.className = 'mistake-item';
+    item.innerHTML = `<strong>${escapeHtml(card.en)}</strong>${escapeHtml(card.fr)}`;
+    return item;
+  }));
+  $('#retryMistakes').hidden = quiz.mistakes.length === 0;
+}
+
+function escapeHtml(text) {
+  return text.replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
+}
+
+function updateImportCount() {
+  const parsed = parseTsv($('#importText').value);
+  $('#importCount').textContent = parsed.length;
+  $('#importStatus').classList.toggle('bad', !parsed.length);
+  return parsed;
+}
+
+function applyImport() {
+  const parsed = updateImportCount();
+  if (parsed.length < 4) return toast('Ajoute au moins quatre cartes pour créer un test.');
+  cards = parsed;
+  deck = [...cards];
+  cardIndex = 0;
+  known = new Set();
+  storage.set('mot-a-mot-cards', cards);
+  updateKnownCount();
+  renderCard();
+  toast(`${cards.length} cartes importées.`);
+  switchView('study');
+}
+
+function restoreSample() {
+  localStorage.removeItem('mot-a-mot-cards');
+  cards = parseTsv(DEFAULT_TSV);
+  deck = [...cards];
+  cardIndex = 0;
+  known = new Set();
+  updateKnownCount();
+  $('#importText').value = DEFAULT_TSV;
+  updateImportCount();
+  renderCard();
+  toast('Liste de démonstration rétablie.');
+}
+
+let toastTimer;
+function toast(message) {
+  const element = $('#toast');
+  element.textContent = message;
+  element.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => element.classList.remove('show'), 2200);
+}
+
+$$('.tab').forEach((tab) => tab.addEventListener('click', () => switchView(tab.dataset.view)));
+$('#revealButton').addEventListener('click', revealCard);
+$('#flashcard').addEventListener('click', (event) => {
+  if (!revealed && !event.target.closest('button')) revealCard();
+});
+$$('[data-rating]').forEach((button) => button.addEventListener('click', () => rateCard(button.dataset.rating)));
+$('#shuffleButton').addEventListener('click', () => { deck = shuffle(deck); cardIndex = 0; renderCard(); toast('Cartes mélangées.'); });
+$('#speakEnglish').addEventListener('click', () => speak(deck[cardIndex % deck.length].en, 'en-CA'));
+$('#speakFrench').addEventListener('click', () => speak(deck[cardIndex % deck.length].fr, 'fr-CA'));
+$('#speakFrenchSlow').addEventListener('click', () => speak(deck[cardIndex % deck.length].fr, 'fr-CA', .68));
+$('#startQuiz').addEventListener('click', () => startQuiz());
+$('#nextQuestion').addEventListener('click', nextQuestion);
+$('#questionAudio').addEventListener('click', () => speak(quiz.questions[quiz.index].card.fr, 'fr-CA'));
+$('#retryMistakes').addEventListener('click', () => startQuiz(quiz.mistakes));
+$('#restartQuiz').addEventListener('click', () => startQuiz());
+$('#importText').addEventListener('input', updateImportCount);
+$('#useImport').addEventListener('click', applyImport);
+$('#restoreSample').addEventListener('click', restoreSample);
+
+updateKnownCount();
+renderCard();
+$('#importCount').textContent = cards.length;
+speechSynthesis?.getVoices();
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
