@@ -315,8 +315,10 @@ footer { max-width: 1080px; margin: 0 auto; padding: 24px 28px 36px; display: fl
   .hero { grid-template-columns: 1fr; gap: 18px; margin: 24px 5px 35px; }
   .hero-copy { max-width: 420px; }
   .catalog { margin-top: -10px; padding: 15px; }
-  .catalog-heading { align-items: center; }
+  .catalog-heading { align-items: stretch; flex-direction: column; }
   .catalog-heading h2 { font-size: 18px; }
+  .course-tabs { width: 100%; min-width: 0; flex-wrap: wrap; }
+  .course-tab { flex: 1 1 56px; min-width: 0; }
   .set-list { grid-template-columns: 1fr; }
   .set-card { padding: 13px; }
   .mode-tabs { position: sticky; top: 8px; z-index: 5; backdrop-filter: blur(12px); }

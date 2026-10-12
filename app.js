@@ -91,6 +91,18 @@ function parseTsv(input) {
   }).filter(Boolean);
 }
 
+function catalogCards(set) {
+  if (Array.isArray(set?.cards)) {
+    return set.cards.map((card, index) => ({
+      id: String(card.id || `${index}-${slug(card.fr || '')}`),
+      fr: String(card.fr || '').trim(),
+      en: String(card.en || '').trim(),
+      note: String(card.note || '').trim(),
+    })).filter((card) => card.fr && card.en);
+  }
+  return parseTsv(set?.tsv || '');
+}
+
 function slug(text) {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 42);
 }
@@ -115,14 +127,14 @@ let browsedCourseId = activeSet.courseId;
 
 function customCardsKey(setId = activeSet.id) { return `mot-a-mot-custom-cards:${setId}`; }
 function knownCardsKey(setId = activeSet.id) { return `mot-a-mot-known:${setId}`; }
-function cardsForSet(set = activeSet) { return storage.get(customCardsKey(set.id), null) || parseTsv(set.tsv); }
+function cardsForSet(set = activeSet) { return storage.get(customCardsKey(set.id), null) || catalogCards(set); }
 
 let cards = cardsForSet();
 let deck = [...cards];
 let cardIndex = 0;
 let revealed = false;
 const legacyKnown = activeSet.id === DEFAULT_SET.id ? storage.get('mot-a-mot-known', []) : [];
-let known = new Set(storage.get(knownCardsKey(), legacyKnown));
+let known = normalizeKnownIds(cards, storage.get(knownCardsKey(), legacyKnown));
 let playSessionActive = false;
 let playRunning = false;
 let playTimer;
@@ -230,9 +242,14 @@ function currentProgress() {
   return { setId: activeSet.id, knownIds: [...known] };
 }
 
+function normalizeKnownIds(setCards, knownIds = []) {
+  const validIds = new Set(setCards.map((card) => card.id));
+  const legacyAliases = new Map(setCards.map((card, index) => [`${index}-${slug(card.fr)}`, card.id]));
+  return new Set(knownIds.map((id) => legacyAliases.get(id) || id).filter((id) => validIds.has(id)));
+}
+
 function applySyncedProgress(progress) {
-  const validIds = new Set(cards.map((card) => card.id));
-  known = new Set((progress?.knownIds || []).filter((id) => validIds.has(id)));
+  known = normalizeKnownIds(cards, progress?.knownIds || []);
   storage.set(knownCardsKey(), [...known]);
   deck = buildDeck();
   cardIndex = Math.min(cardIndex, Math.max(0, deck.length - 1));
@@ -323,7 +340,7 @@ function renderCatalog() {
   }
 
   setList.replaceChildren(...course.sets.map((set) => {
-    const parsed = parseTsv(set.tsv);
+    const parsed = catalogCards(set);
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'set-card';
@@ -347,7 +364,7 @@ function selectSet(setId) {
   browsedCourseId = nextSet.courseId;
   storage.set('mot-a-mot-active-set', activeSet.id);
   cards = cardsForSet();
-  known = new Set(storage.get(knownCardsKey(), []));
+  known = normalizeKnownIds(cards, storage.get(knownCardsKey(), []));
   studyFilter = 'all';
   cardIndex = 0;
   deck = buildDeck();
@@ -749,7 +766,7 @@ function applyImport() {
 
 function restoreSample() {
   localStorage.removeItem(customCardsKey());
-  cards = parseTsv(activeSet.tsv);
+  cards = catalogCards(activeSet);
   cardIndex = 0;
   known = new Set();
   playSessionActive = false;
