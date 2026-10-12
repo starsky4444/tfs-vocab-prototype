@@ -7,7 +7,7 @@
     <meta name="description" content="Apprendre le vocabulaire français avec des cartes audio et des mini-tests." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=13" />
+    <link rel="stylesheet" href="styles.css?v=14" />
     <title>Mot à mot · Français</title>
   </head>
   <body>
@@ -99,6 +99,20 @@
           <button class="rating again" data-rating="again"><span>↺</span> À revoir</button>
           <button class="rating known" data-rating="known"><span>✓</span> Je sais</button>
         </div>
+
+        <section class="vocabulary-list" aria-labelledby="vocabularyListTitle">
+          <div class="vocabulary-list-title">
+            <h3 id="vocabularyListTitle">Tout le vocabulaire</h3>
+            <span><b id="vocabularyListCount">70</b> cartes</span>
+          </div>
+          <div class="vocabulary-grid" role="table" aria-label="Vocabulaire français et anglais">
+            <div class="vocabulary-row vocabulary-heading" role="row">
+              <span role="columnheader">Français</span>
+              <span role="columnheader">English</span>
+            </div>
+            <div id="vocabularyRows" class="vocabulary-rows" role="rowgroup"></div>
+          </div>
+        </section>
       </section>
 
       <section id="quizView" class="view" aria-labelledby="quizTitle">
@@ -159,6 +173,6 @@
 
     <footer><span>Prototype pédagogique</span><span>Audio généré par ton appareil</span></footer>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=13"></script>
+    <script src="app.js?v=14"></script>
   </body>
 </html>

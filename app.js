@@ -215,8 +215,47 @@ function cardsForFilter(filter = studyFilter) {
   return [...cards];
 }
 
+function renderVocabularyList() {
+  const filteredCards = cardsForFilter();
+  const rows = $('#vocabularyRows');
+  rows.replaceChildren();
+  $('#vocabularyListCount').textContent = filteredCards.length;
+
+  if (!filteredCards.length) {
+    const emptyRow = document.createElement('div');
+    emptyRow.className = 'vocabulary-row';
+    emptyRow.setAttribute('role', 'row');
+    const emptyCell = document.createElement('span');
+    emptyCell.className = 'vocabulary-empty';
+    emptyCell.setAttribute('role', 'cell');
+    emptyCell.textContent = studyFilter === 'known'
+      ? 'Aucune carte marquée « Je sais ».'
+      : 'Aucune carte dans ce mode.';
+    emptyRow.append(emptyCell);
+    rows.append(emptyRow);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  filteredCards.forEach((card) => {
+    const row = document.createElement('div');
+    row.className = 'vocabulary-row';
+    row.setAttribute('role', 'row');
+    const french = document.createElement('span');
+    french.setAttribute('role', 'cell');
+    french.textContent = card.fr;
+    const english = document.createElement('span');
+    english.setAttribute('role', 'cell');
+    english.textContent = card.en;
+    row.append(french, english);
+    fragment.append(row);
+  });
+  rows.append(fragment);
+}
+
 function updateFilterButton() {
   const labels = { all: 'Toutes', unknown: 'À apprendre', known: 'Je sais' };
+  const listTitles = { all: 'Tout le vocabulaire', unknown: 'Vocabulaire à apprendre', known: 'Vocabulaire maîtrisé' };
   const descriptions = {
     all: 'Afficher toutes les cartes',
     unknown: 'Afficher seulement les cartes non maîtrisées',
@@ -224,8 +263,10 @@ function updateFilterButton() {
   };
   $('#filterButtonLabel').textContent = labels[studyFilter];
   $('#filterButtonCount').textContent = cardsForFilter().length;
+  $('#vocabularyListTitle').textContent = listTitles[studyFilter];
   $('#filterButton').dataset.filter = studyFilter;
   $('#filterButton').setAttribute('aria-label', descriptions[studyFilter]);
+  renderVocabularyList();
 }
 
 function cycleStudyFilter() {
