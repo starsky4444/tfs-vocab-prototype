@@ -145,7 +145,7 @@ h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight
   color: var(--ink); font-size: 12px; font-weight: 850;
 }
 .play-button #playButtonIcon { color: var(--coral); }
-.play-button.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.play-button.active { border-color: #000; background: #000; color: var(--paper); }
 .play-button.active #playButtonIcon { color: var(--yellow); }
 .reveal-mode-button, .slow-french-button {
   height: 44px; display: inline-flex; align-items: center; gap: 7px; padding: 0 13px;
@@ -159,7 +159,7 @@ h2 { font-family: Georgia, serif; font-size: clamp(31px, 5vw, 46px); font-weight
   color: var(--ink); font-size: 11px; font-weight: 850;
 }
 .shuffle-button > span { color: var(--coral); font-size: 18px; }
-.reveal-mode-button.active, .slow-french-button.active, .shuffle-button.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.reveal-mode-button.active, .slow-french-button.active, .shuffle-button.active { border-color: #000; background: #000; color: var(--paper); }
 .reveal-mode-button.active > span:first-child, .slow-french-button.active > span:first-child, .shuffle-button.active > span { color: var(--yellow); }
 .direction-button {
   height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 13px;

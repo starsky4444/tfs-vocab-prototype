@@ -943,6 +943,27 @@ $('#importText').addEventListener('input', updateImportCount);
 $('#useImport').addEventListener('click', applyImport);
 $('#restoreSample').addEventListener('click', restoreSample);
 
+document.addEventListener('keydown', (event) => {
+  const target = event.target;
+  const isEditing = target instanceof HTMLElement && (
+    target.isContentEditable ||
+    ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
+  );
+  if (isEditing || event.metaKey || event.ctrlKey || event.altKey || event.repeat) return;
+  if (!$('#studyView').classList.contains('active')) return;
+
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    navigateCard(-1);
+  } else if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    navigateCard(1);
+  } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    event.preventDefault();
+    toggleStudyDirection();
+  }
+});
+
 updateSetIdentity();
 renderCatalog();
 updateKnownCount();
