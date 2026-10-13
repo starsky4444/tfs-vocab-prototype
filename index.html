@@ -7,7 +7,7 @@
     <meta name="description" content="Apprendre le vocabulaire français avec des cartes audio et des mini-tests." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=24" />
+    <link rel="stylesheet" href="styles.css?v=26" />
     <title>Mot à mot · Français</title>
   </head>
   <body>
@@ -106,7 +106,7 @@
         <article class="flashcard" id="flashcard">
           <div class="card-topline">
             <span id="promptLanguage" class="language-pill">EN</span>
-            <span class="card-meta"><span id="cardNumber" class="card-number">Carte 1/70</span><span id="cardNote" class="card-note"></span></span>
+            <span class="card-meta"><span id="cardNumber" class="card-number">Carte 1/70</span><span id="cardNote" class="card-note"></span><button id="fullscreenButton" class="fullscreen-button" type="button" aria-pressed="false" aria-label="Afficher la carte en plein écran" title="Plein écran"><span aria-hidden="true">⛶</span></button></span>
           </div>
           <div class="card-content">
             <p id="promptText" class="term prompt"></p>
@@ -213,21 +213,24 @@
         </a>
         <p class="eyebrow">Espace étudiant</p>
         <h2 id="authTitle">Retrouve tes cartes<br />sur tous tes appareils.</h2>
-        <p class="auth-copy">Connecte-toi pour accéder à tous tes sets et garder ta progression.</p>
+        <p class="auth-copy">Connecte-toi avec l’adresse Google autorisée par l’école pour retrouver tes niveaux et garder ta progression.</p>
         <button id="googleSignIn" class="google-sign-in" type="button"><span>G</span> Continuer avec Google</button>
-        <div class="auth-divider"><span>ou</span></div>
-        <form id="emailSignInForm" class="email-sign-in">
-          <label for="emailSignIn">Adresse courriel</label>
-          <div>
-            <input id="emailSignIn" name="email" type="email" autocomplete="email" placeholder="nom@exemple.com" required />
-            <button type="submit">Recevoir le lien</button>
-          </div>
-        </form>
         <p id="authStatus" class="auth-status" role="status" aria-live="polite"></p>
       </div>
     </section>
-    <script src="catalog.js?v=5"></script>
-    <script src="app.js?v=24"></script>
-    <script type="module" src="firebase-client.js?v=2"></script>
+    <section id="accessGate" class="auth-gate" hidden aria-labelledby="accessTitle">
+      <div class="auth-card">
+        <a class="brand auth-brand" href="#" aria-label="Mot à mot">
+          <span class="brand-mark">M</span>
+          <span><strong>Mot à mot</strong><small>par The French School</small></span>
+        </a>
+        <p class="eyebrow">Accès en attente</p>
+        <h2 id="accessTitle">Ton compte est prêt.<br />Ton cours arrive ensuite.</h2>
+        <p class="auth-copy">Cette adresse n’a pas encore de niveau attribué. Utilise l’adresse donnée à l’école ou contacte-nous pour activer ton accès.</p>
+        <p id="accessEmail" class="access-email"></p>
+        <button id="accessSignOut" class="google-sign-in" type="button">Essayer une autre adresse</button>
+      </div>
+    </section>
+    <script type="module" src="firebase-client.js?v=9"></script>
   </body>
 </html>

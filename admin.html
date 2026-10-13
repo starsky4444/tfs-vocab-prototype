@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#12372a" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css?v=26" />
+    <title>Accès étudiants · Mot à mot</title>
+    <style>
+      .admin-shell { width: min(760px, calc(100% - 28px)); margin: 48px auto; }
+      .admin-panel { padding: clamp(24px, 5vw, 42px); }
+      .admin-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, auto) auto; gap: 10px; margin: 28px 0 14px; }
+      .admin-form input, .admin-form select { min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+      .admin-form button { padding: 13px 18px; border: 0; border-radius: 12px; color: white; background: var(--ink); cursor: pointer; font-weight: 850; }
+      .admin-status { min-height: 24px; color: var(--ink-soft); }
+      .access-list { display: grid; gap: 8px; margin-top: 28px; }
+      .access-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(170px, auto) auto auto; align-items: center; gap: 10px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 13px; background: white; }
+      .access-row span { overflow-wrap: anywhere; }
+      .access-row select { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); font-weight: 850; }
+      .access-row button { padding: 10px 13px; border: 0; border-radius: 10px; color: white; background: var(--ink); cursor: pointer; font-weight: 850; }
+      .access-row .delete-access { color: #8d241d; background: #f9e8e5; }
+      .access-row button:disabled { opacity: .6; cursor: wait; }
+      .editor-panel { margin-top: 24px; }
+      .editor-controls { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; margin: 24px 0 12px; }
+      .editor-controls select { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: white; font-weight: 800; }
+      .card-editor-list { display: grid; gap: 10px; margin-top: 18px; }
+      .card-editor-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(150px, .65fr) auto; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 13px; background: white; }
+      .card-editor-row textarea { min-height: 78px; resize: vertical; padding: 10px; font-size: 12px; }
+      .card-editor-row button { align-self: stretch; padding: 10px 13px; border: 0; border-radius: 10px; color: white; background: var(--ink); cursor: pointer; font-weight: 850; }
+      .card-editor-id { grid-column: 1 / -1; color: var(--ink-soft); font-size: 10px; overflow-wrap: anywhere; }
+      @media (max-width: 620px) {
+        .admin-form { grid-template-columns: 1fr; }
+        .access-row { grid-template-columns: 1fr 1fr; }
+        .access-row span, .access-row select { grid-column: 1 / -1; }
+        .access-row button { grid-column: auto; }
+        .editor-controls, .card-editor-row { grid-template-columns: 1fr; }
+        .card-editor-row button { min-height: 44px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Retour à Mot à mot">
+        <span class="brand-mark">M</span>
+        <span><strong>Mot à mot</strong><small>Gestion des accès</small></span>
+      </a>
+      <button id="adminAccount" class="account-button" type="button" hidden>
+        <span id="adminAvatar" class="account-avatar">?</span>
+        <span id="adminName">Administrateur</span>
+      </button>
+    </header>
+    <main class="admin-shell">
+      <section class="panel admin-panel">
+        <p class="eyebrow">Administration</p>
+        <h1>Accès étudiants</h1>
+        <p class="auth-copy">Choisis le cours de l’étudiant. Le niveau et les contenus précédents sont attribués automatiquement.</p>
+        <form id="accessForm" class="admin-form">
+          <input id="studentEmail" type="email" autocomplete="email" placeholder="etudiant@exemple.com" required />
+          <select id="courseChoice" aria-label="Cours" required></select>
+          <button type="submit">Activer l’accès</button>
+        </form>
+        <p id="adminStatus" class="admin-status" role="status" aria-live="polite"></p>
+        <div id="accessList" class="access-list" aria-live="polite"></div>
+      </section>
+      <section class="panel admin-panel editor-panel" aria-labelledby="cardEditorTitle">
+        <p class="eyebrow">Contenu</p>
+        <h2 id="cardEditorTitle">Modifier les cartes</h2>
+        <p class="auth-copy">Choisis un niveau et un set de vocabulaire. L’identifiant de la carte reste inchangé pour préserver la progression.</p>
+        <div class="editor-controls">
+          <select id="editorLevel" aria-label="Niveau à modifier"></select>
+          <select id="editorSet" aria-label="Set de vocabulaire à modifier"></select>
+        </div>
+        <p id="editorStatus" class="admin-status" role="status" aria-live="polite"></p>
+        <div id="cardEditorList" class="card-editor-list"></div>
+      </section>
+    </main>
+    <section id="adminGate" class="auth-gate" aria-labelledby="adminGateTitle">
+      <div class="auth-card">
+        <a class="brand auth-brand" href="./" aria-label="Mot à mot">
+          <span class="brand-mark">M</span>
+          <span><strong>Mot à mot</strong><small>par The French School</small></span>
+        </a>
+        <p class="eyebrow">Administration</p>
+        <h2 id="adminGateTitle">Gestion des accès étudiants</h2>
+        <p class="auth-copy">Connecte-toi avec un compte administrateur de l’école.</p>
+        <button id="adminSignIn" class="google-sign-in" type="button"><span>G</span> Continuer avec Google</button>
+        <p id="adminGateStatus" class="auth-status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+    <script type="module" src="admin.js?v=6"></script>
+  </body>
+</html>

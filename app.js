@@ -117,24 +117,50 @@ function shuffle(items) {
 }
 
 const CATALOG = window.VOCAB_CATALOG || [];
+const ACCESS = window.MOT_A_MOT_ACCESS || {};
+const COURSE_SCHEDULE = window.MotAMotCourseSchedule;
 const ALL_SETS = CATALOG.flatMap((course) => course.sets.map((set) => ({ ...set, courseId: course.id })));
 const DEFAULT_SET = ALL_SETS[0] || {
   id: 'legacy-set', courseId: 'A1', shortTitle: 'Vocabulaire', title: 'Vocabulaire',
   description: '', goalStartDate: '2026-10-11', tsv: DEFAULT_TSV,
 };
-let activeSet = ALL_SETS.find((set) => set.id === storage.get('mot-a-mot-active-set', DEFAULT_SET.id)) || DEFAULT_SET;
+function buildAutomaticSet() {
+  const goal = currentCourseGoal();
+  const sourceSets = goal.setIds.map((id) => ALL_SETS.find((set) => set.id === id)).filter(Boolean);
+  return {
+    id: `automatic-${goal.courseLevel || ACCESS.maxLevel || 'course'}`,
+    courseId: goal.courseLevel || ACCESS.maxLevel || DEFAULT_SET.courseId,
+    title: 'Automatique · à apprendre aujourd’hui',
+    shortTitle: 'Automatique',
+    description: `${goal.totalCards} cartes cumulées selon la date du cours`,
+    automatic: true,
+    sourceSetIds: sourceSets.map((set) => set.id),
+    cards: sourceSets.flatMap((set) => catalogCards(set).map((card) => ({ ...card, sourceSetId: set.id }))),
+  };
+}
+const AUTOMATIC_SET = buildAutomaticSet();
+const SELECTABLE_SETS = [AUTOMATIC_SET, ...ALL_SETS];
+let activeSet = SELECTABLE_SETS.find((set) => set.id === storage.get('mot-a-mot-active-set', DEFAULT_SET.id)) || DEFAULT_SET;
 let browsedCourseId = activeSet.courseId;
 
 function customCardsKey(setId = activeSet.id) { return `mot-a-mot-custom-cards:${setId}`; }
 function knownCardsKey(setId = activeSet.id) { return `mot-a-mot-known:${setId}`; }
-function cardsForSet(set = activeSet) { return storage.get(customCardsKey(set.id), null) || catalogCards(set); }
+function cardsForSet(set = activeSet) { return set.automatic ? catalogCards(set) : storage.get(customCardsKey(set.id), null) || catalogCards(set); }
+
+function knownForSet(set = activeSet) {
+  if (!set.automatic) {
+    const fallback = set.id === DEFAULT_SET.id ? storage.get('mot-a-mot-known', []) : [];
+    return normalizeKnownIds(cardsForSet(set), storage.get(knownCardsKey(set.id), fallback));
+  }
+  const knownIds = set.sourceSetIds.flatMap((setId) => storage.get(knownCardsKey(setId), []));
+  return normalizeKnownIds(cardsForSet(set), knownIds);
+}
 
 let cards = cardsForSet();
 let deck = [...cards];
 let cardIndex = 0;
 let revealed = false;
-const legacyKnown = activeSet.id === DEFAULT_SET.id ? storage.get('mot-a-mot-known', []) : [];
-let known = normalizeKnownIds(cards, storage.get(knownCardsKey(), legacyKnown));
+let known = knownForSet();
 let playSessionActive = false;
 let playRunning = false;
 let playTimer;
@@ -148,7 +174,7 @@ let autoSound = { fr: savedAutoSound.fr !== false, en: savedAutoSound.en !== fal
 let voicePreferences = storage.get('mot-a-mot-voice-preferences', { fr: '', en: '' });
 let slowFrench = storage.get('mot-a-mot-slow-french', false) === true;
 let autoSpeakTimer;
-const CARDS_PER_DAY = 10;
+let cardFullscreen = false;
 const PLAY_DELAY_MS = 5000;
 
 function cleanForSpeech(text) {
@@ -300,25 +326,40 @@ function toggleSlowFrench() {
 }
 
 function updateKnownCount() {
-  $('#knownCount').textContent = known.size;
-  const today = new Date();
-  const todayNumber = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-  const [startYear, startMonth, startDay] = activeSet.goalStartDate.split('-').map(Number);
-  const startNumber = Date.UTC(startYear, startMonth - 1, startDay);
-  const elapsedDays = Math.floor((todayNumber - startNumber) / 86400000);
-  const goal = Math.min(cards.length, Math.max(0, elapsedDays + 1) * CARDS_PER_DAY);
-  $('#dailyGoal').textContent = goal;
+  if (!activeSet.automatic) storage.set(knownCardsKey(), [...known]);
+  const goal = currentCourseGoal();
+  const knownGoal = knownCountForGoal(goal);
+  $('#knownCount').textContent = knownGoal;
+  $('#dailyGoal').textContent = goal.totalCards;
   const goalProgress = $('#goalProgress');
-  goalProgress.classList.toggle('met', known.size >= goal);
-  goalProgress.classList.toggle('behind', known.size < goal);
-  storage.set(knownCardsKey(), [...known]);
+  goalProgress.classList.toggle('met', knownGoal >= goal.totalCards);
+  goalProgress.classList.toggle('behind', knownGoal < goal.totalCards);
+  goalProgress.title = goal.isTest
+    ? `${goal.totalCards} cartes dans le cours ${goal.courseLevel}`
+    : `${goal.totalCards} cartes disponibles après ${goal.availableSets} semaine(s) de cours`;
   updateFilterButton();
   renderCatalog();
-  window.dispatchEvent(new CustomEvent('mot-a-mot:progress', { detail: currentProgress() }));
+  const progress = currentProgress();
+  if (progress.setId) window.dispatchEvent(new CustomEvent('mot-a-mot:progress', { detail: progress }));
+}
+
+function currentCourseGoal() {
+  if (!COURSE_SCHEDULE) return { setIds: [activeSet.id], totalCards: cards.length, availableSets: 1, courseLevel: activeSet.courseId, isTest: false };
+  return COURSE_SCHEDULE.goalForCatalog(CATALOG, ACCESS);
+}
+
+function knownCountForGoal(goal = currentCourseGoal()) {
+  return goal.setIds.reduce((sum, setId) => {
+    const set = ALL_SETS.find((item) => item.id === setId);
+    if (!set) return sum;
+    const fallback = set.id === DEFAULT_SET.id ? storage.get('mot-a-mot-known', []) : [];
+    const saved = storage.get(knownCardsKey(set.id), fallback);
+    return sum + normalizeKnownIds(catalogCards(set), saved).size;
+  }, 0);
 }
 
 function currentProgress() {
-  return { setId: activeSet.id, knownIds: [...known] };
+  return activeSet.automatic ? { setId: null, knownIds: [] } : { setId: activeSet.id, knownIds: [...known] };
 }
 
 function normalizeKnownIds(setCards, knownIds = []) {
@@ -385,48 +426,35 @@ function renderVocabularyList() {
   rows.append(fragment);
 }
 
-function knownCountForSet(set) {
-  const fallback = set.id === DEFAULT_SET.id ? storage.get('mot-a-mot-known', []) : [];
-  return storage.get(knownCardsKey(set.id), fallback).length;
-}
-
-function createSetCard(set) {
-  const parsed = catalogCards(set);
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'set-card';
-  button.classList.toggle('active', set.id === activeSet.id);
-  button.setAttribute('aria-pressed', String(set.id === activeSet.id));
-  button.innerHTML = `<span class="set-card-copy"><b>${escapeHtml(set.shortTitle)}</b><small>${escapeHtml(set.description)}</small></span><span class="set-card-progress"><b>${knownCountForSet(set)}/${parsed.length}</b><small>Je sais</small></span>`;
-  button.addEventListener('click', () => selectSet(set.id));
-  return button;
-}
-
-function createSetGroup(courseId, kind, title, description, sets) {
+function createSetMenu(courseId, kind, title, description, sets, includeAutomatic = false) {
   if (!sets.length) return null;
   const section = document.createElement('section');
-  section.className = 'set-group';
+  section.className = 'set-menu';
   section.dataset.setGroup = kind;
-
-  const heading = document.createElement('div');
-  heading.className = 'set-group-heading';
-  const copy = document.createElement('div');
   const headingId = `set-group-${courseId.toLowerCase()}-${kind}`;
   const label = document.createElement('h3');
   label.id = headingId;
   label.textContent = title;
   const detail = document.createElement('p');
   detail.textContent = description;
-  const count = document.createElement('span');
-  count.textContent = `${sets.length} ${sets.length > 1 ? 'listes' : 'liste'}`;
-  copy.append(label, detail);
-  heading.append(copy, count);
-
-  const grid = document.createElement('div');
-  grid.className = 'set-grid';
-  grid.append(...sets.map(createSetCard));
+  const select = document.createElement('select');
+  select.setAttribute('aria-labelledby', headingId);
+  select.append(new Option(`Choisir ${title.toLowerCase()}…`, ''));
+  if (includeAutomatic) {
+    const option = new Option(`Automatique · ${AUTOMATIC_SET.cards.length} cartes à apprendre aujourd’hui`, AUTOMATIC_SET.id);
+    option.selected = activeSet.id === AUTOMATIC_SET.id;
+    select.append(option);
+  }
+  for (const set of sets) {
+    const option = new Option(`${set.shortTitle} · ${catalogCards(set).length} cartes`, set.id);
+    option.selected = activeSet.id === set.id;
+    select.append(option);
+  }
+  select.addEventListener('change', () => {
+    if (select.value) selectSet(select.value);
+  });
   section.setAttribute('aria-labelledby', headingId);
-  section.append(heading, grid);
+  section.append(label, detail, select);
   return section;
 }
 
@@ -460,15 +488,16 @@ function renderCatalog() {
 
   const lessonSets = course.sets.filter((set) => !/^Quiz\b/i.test(set.title));
   const quizSets = course.sets.filter((set) => /^Quiz\b/i.test(set.title));
+  const assignedCourse = course.id === (ACCESS.maxLevel || AUTOMATIC_SET.courseId);
   const groups = [
-    createSetGroup(course.id, 'sets', 'Sets', 'Cours regroupés par blocs de deux jours', lessonSets),
-    createSetGroup(course.id, 'quiz', 'Quiz', 'Phrases classées par jour', quizSets),
+    createSetMenu(course.id, 'sets', 'Sets', 'Un bloc de vocabulaire par semaine de cours', lessonSets, assignedCourse),
+    createSetMenu(course.id, 'quiz', 'Quiz', 'Phrases classées par jour', quizSets),
   ].filter(Boolean);
   setList.replaceChildren(...groups);
 }
 
 function selectSet(setId) {
-  const nextSet = ALL_SETS.find((set) => set.id === setId);
+  const nextSet = SELECTABLE_SETS.find((set) => set.id === setId);
   if (!nextSet || nextSet.id === activeSet.id) return;
   playSessionActive = false;
   playRunning = false;
@@ -479,7 +508,7 @@ function selectSet(setId) {
   browsedCourseId = nextSet.courseId;
   storage.set('mot-a-mot-active-set', activeSet.id);
   cards = cardsForSet();
-  known = normalizeKnownIds(cards, storage.get(knownCardsKey(), []));
+  known = knownForSet();
   studyFilter = 'all';
   cardIndex = 0;
   deck = buildDeck();
@@ -492,7 +521,7 @@ function selectSet(setId) {
   updatePlayButton();
   renderCard();
   $('#importCount').textContent = cards.length;
-  window.dispatchEvent(new CustomEvent('mot-a-mot:set-change', { detail: { setId: activeSet.id } }));
+  if (!activeSet.automatic) window.dispatchEvent(new CustomEvent('mot-a-mot:set-change', { detail: { setId: activeSet.id } }));
   toast(`${activeSet.courseId} · ${activeSet.shortTitle} : ${cards.length} cartes.`);
 }
 
@@ -689,6 +718,27 @@ function toggleStudyDirection() {
   toast(studyDirection === 'en-fr' ? 'Anglais vers français.' : 'Français vers anglais.');
 }
 
+function applyCardFullscreen(enabled) {
+  cardFullscreen = Boolean(enabled);
+  document.body.classList.toggle('card-fullscreen', cardFullscreen);
+  const button = $('#fullscreenButton');
+  button.setAttribute('aria-pressed', String(cardFullscreen));
+  button.setAttribute('aria-label', cardFullscreen ? 'Quitter le plein écran' : 'Afficher la carte en plein écran');
+  button.title = cardFullscreen ? 'Quitter le plein écran' : 'Plein écran';
+  button.querySelector('span').textContent = cardFullscreen ? '×' : '⛶';
+}
+
+async function toggleCardFullscreen() {
+  if (cardFullscreen) {
+    applyCardFullscreen(false);
+    if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen().catch(() => {});
+    return;
+  }
+  applyCardFullscreen(true);
+  const studyView = $('#studyView');
+  if (studyView.requestFullscreen) await studyView.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+}
+
 function revealCard() {
   if (revealed) return;
   revealed = true;
@@ -705,6 +755,17 @@ function revealCard() {
 function rateCard(rating) {
   const card = deck[cardIndex % deck.length];
   if (rating === 'known') known.add(card.id); else known.delete(card.id);
+  if (activeSet.automatic && card.sourceSetId) {
+    const sourceSet = ALL_SETS.find((set) => set.id === card.sourceSetId);
+    if (sourceSet) {
+      const sourceKnown = normalizeKnownIds(catalogCards(sourceSet), storage.get(knownCardsKey(sourceSet.id), []));
+      if (rating === 'known') sourceKnown.add(card.id); else sourceKnown.delete(card.id);
+      storage.set(knownCardsKey(sourceSet.id), [...sourceKnown]);
+      window.dispatchEvent(new CustomEvent('mot-a-mot:progress', {
+        detail: { setId: sourceSet.id, knownIds: [...sourceKnown] },
+      }));
+    }
+  }
   updateKnownCount();
   if (studyFilter !== 'all') {
     const filteredCards = cardsForFilter();
@@ -918,6 +979,7 @@ $('#playButton').addEventListener('click', togglePlay);
 $('#slowFrenchButton').addEventListener('click', toggleSlowFrench);
 $('#revealModeButton').addEventListener('click', toggleRevealMode);
 $('#directionButton').addEventListener('click', toggleStudyDirection);
+$('#fullscreenButton').addEventListener('click', toggleCardFullscreen);
 $('#previousCard').addEventListener('click', () => navigateCard(-1));
 $('#nextCard').addEventListener('click', () => navigateCard(1));
 $('#autoSoundFrench').addEventListener('change', (event) => setAutoSound('fr', event.target.checked));
@@ -949,6 +1011,11 @@ document.addEventListener('keydown', (event) => {
     target.isContentEditable ||
     ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
   );
+  if (event.key === 'Escape' && cardFullscreen) {
+    event.preventDefault();
+    toggleCardFullscreen();
+    return;
+  }
   if (isEditing || event.metaKey || event.ctrlKey || event.altKey || event.repeat) return;
   if (!$('#studyView').classList.contains('active')) return;
 
@@ -962,6 +1029,10 @@ document.addEventListener('keydown', (event) => {
     event.preventDefault();
     toggleStudyDirection();
   }
+});
+
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && cardFullscreen) applyCardFullscreen(false);
 });
 
 updateSetIdentity();
@@ -982,6 +1053,7 @@ window.speechSynthesis?.addEventListener('voiceschanged', updateVoiceControls);
 
 window.MotAMot = {
   getProgress: currentProgress,
+  getCourseGoal: currentCourseGoal,
   applyProgress: applySyncedProgress,
   notify: toast,
 };
